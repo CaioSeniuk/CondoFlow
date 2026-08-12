@@ -41,10 +41,6 @@ class Reservation(AuditModel):
         if self.start_time >= self.end_time:
             raise ValidationError("start_time must be before end_time.")
 
-        # Simple overlap check that works on both SQLite and PostgreSQL.
-        # For PostgreSQL, a stronger guarantee could be added with a
-        # django.contrib.postgres.constraints.ExclusionConstraint (btree_gist),
-        # but that is not required for the MVP.
         conflicts = Reservation.objects.filter(
             common_area=self.common_area,
             status=self.Status.CONFIRMED,
