@@ -65,26 +65,12 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "condoflow.wsgi.application"
 
-DB_ENGINE = os.getenv("DB_ENGINE", "sqlite")
-
-if DB_ENGINE == "postgres":
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.postgresql",
-            "NAME": os.getenv("DB_NAME", "condoflow"),
-            "USER": os.getenv("DB_USER", "condoflow"),
-            "PASSWORD": os.getenv("DB_PASSWORD", "condoflow"),
-            "HOST": os.getenv("DB_HOST", "db"),
-            "PORT": os.getenv("DB_PORT", "5432"),
-        }
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
     }
-else:
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.sqlite3",
-            "NAME": BASE_DIR / "db.sqlite3",
-        }
-    }
+}
 
 AUTH_USER_MODEL = "users.User"
 
