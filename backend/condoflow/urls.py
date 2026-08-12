@@ -20,7 +20,7 @@ urlpatterns = [
     path("api/providers/", include("providers.urls")),
     path("api/reservations/", include("reservations.urls")),
     path("api/polls/", include("polls.urls")),
-    path("api/finance/", include("finance.urls")),
+    path("api/finance/", include("finance.api.urls")),
 ]
 
 if settings.DEBUG:
