@@ -1,0 +1,876 @@
+/* 01 - Onboarding */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+justify-content: center;
+align-items: center;
+padding: 0px 32px;
+gap: 20px;
+
+position: relative;
+width: 375px;
+height: 812px;
+
+background: #FFFFFF;
+
+
+/* 02 - Login e seleção de perfil */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 64px 24px 0px;
+gap: 20px;
+
+position: relative;
+width: 375px;
+height: 812px;
+
+background: #FFFFFF;
+
+
+/* 03 - Home do morador */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 20px;
+gap: 24px;
+
+position: relative;
+width: 375px;
+height: 812px;
+
+background: #F5F6F8;
+
+
+/* 04 - Criar comunicado (síndico) */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+
+position: relative;
+width: 375px;
+height: 812px;
+
+background: #FFFFFF;
+
+
+/* meus-chamados */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+isolation: isolate;
+
+position: relative;
+width: 375px;
+height: 812px;
+
+background: #F5F6F8;
+
+
+/* novo-chamado */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+
+position: relative;
+width: 375px;
+height: 812px;
+
+background: #FFFFFF;
+
+
+/* reservas */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+
+position: relative;
+width: 375px;
+height: 812px;
+
+background: #F5F6F8;
+
+
+/* confirmar-reserva */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+
+position: relative;
+width: 375px;
+height: 812px;
+
+background: #FFFFFF;
+
+
+/* 09 - Visitantes */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+isolation: isolate;
+
+position: relative;
+width: 375px;
+height: 812px;
+min-height: 812px;
+
+background: #F5F6F8;
+
+
+/* 10 - Autorizar visitante */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+
+position: relative;
+width: 375px;
+height: 812px;
+min-height: 812px;
+
+background: #FFFFFF;
+
+
+/* 11 - Encomendas */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+
+position: relative;
+width: 375px;
+height: 812px;
+min-height: 812px;
+
+background: #F5F6F8;
+
+
+/* 12 - Home do síndico */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 20px;
+gap: 20px;
+
+position: relative;
+width: 375px;
+height: 812px;
+min-height: 812px;
+
+background: #F5F6F8;
+
+
+/* 13 - Home do porteiro */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+
+position: relative;
+width: 375px;
+height: 812px;
+min-height: 812px;
+
+background: #F5F6F8;
+
+
+/* 14 - Registrar chegada de visitante */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+
+position: relative;
+width: 375px;
+height: 812px;
+min-height: 812px;
+
+background: #FFFFFF;
+
+
+/* 15 - Notificações */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+
+position: relative;
+width: 375px;
+height: 812px;
+min-height: 812px;
+
+background: #F5F6F8;
+
+
+/* 16 - Perfil e configurações */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+
+position: relative;
+width: 375px;
+height: 812px;
+min-height: 812px;
+
+background: #FFFFFF;
+
+
+/* 17 - Histórico de acessos */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+
+position: relative;
+width: 375px;
+height: 812px;
+
+background: #F5F6F8;
+
+
+/* 18 - Controle de encomendas (porteiro) */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+isolation: isolate;
+
+position: relative;
+width: 375px;
+height: 812px;
+
+background: #F5F6F8;
+
+
+/* 19 - Busca rápida */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+
+position: relative;
+width: 375px;
+height: 812px;
+
+background: #FFFFFF;
+
+
+/* 20 - Livro de ocorrências */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+
+position: relative;
+width: 375px;
+height: 812px;
+
+background: #F5F6F8;
+
+
+/* 21 - Home do prestador */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+
+position: relative;
+width: 375px;
+height: 812px;
+
+background: #F5F6F8;
+
+
+/* 22 - Detalhes do serviço */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+
+position: relative;
+width: 375px;
+height: 812px;
+
+background: #F5F6F8;
+
+
+/* 23 - Registrar conclusão */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+
+position: relative;
+width: 375px;
+height: 812px;
+
+background: #FFFFFF;
+
+
+/* Frame */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+
+position: relative;
+width: 375px;
+height: 812px;
+
+background: #F5F6F8;
+
+
+/* 09 - Visitantes */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+isolation: isolate;
+
+position: relative;
+width: 375px;
+height: 812px;
+min-height: 812px;
+
+background: #F5F6F8;
+
+
+/* 10 - Autorizar visitante */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+
+position: relative;
+width: 375px;
+height: 812px;
+min-height: 812px;
+
+background: #FFFFFF;
+
+
+/* 11 - Encomendas */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+
+position: relative;
+width: 375px;
+height: 812px;
+min-height: 812px;
+
+background: #F5F6F8;
+
+
+/* 12 - Home do síndico */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 20px;
+gap: 20px;
+
+position: relative;
+width: 375px;
+height: 812px;
+min-height: 812px;
+
+background: #F5F6F8;
+
+
+/* 13 - Home do porteiro */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+
+position: relative;
+width: 375px;
+height: 812px;
+min-height: 812px;
+
+background: #F5F6F8;
+
+
+/* 14 - Registrar chegada de visitante */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+
+position: relative;
+width: 375px;
+height: 812px;
+min-height: 812px;
+
+background: #FFFFFF;
+
+
+/* 15 - Notificações */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+
+position: relative;
+width: 375px;
+height: 812px;
+min-height: 812px;
+
+background: #F5F6F8;
+
+
+/* 16 - Perfil e configurações */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+
+position: relative;
+width: 375px;
+height: 812px;
+min-height: 812px;
+
+background: #FFFFFF;
+
+
+/* historico-de-acessos */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+
+position: relative;
+width: 375px;
+height: 812px;
+
+background: #F5F6F8;
+
+
+/* controle-de-encomendas-porteiro */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+isolation: isolate;
+
+position: relative;
+width: 375px;
+height: 812px;
+
+background: #F5F6F8;
+
+
+/* busca-rapida */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+
+position: relative;
+width: 375px;
+height: 812px;
+
+background: #FFFFFF;
+
+
+/* livro-de-ocorrencias */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+
+position: relative;
+width: 375px;
+height: 812px;
+
+background: #F5F6F8;
+
+
+/* home-do-prestador */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+
+position: relative;
+width: 375px;
+height: 812px;
+
+background: #F5F6F8;
+
+
+/* detalhes-do-servico */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+
+position: relative;
+width: 375px;
+height: 812px;
+
+background: #F5F6F8;
+
+
+/* registrar-conclusao */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+
+position: relative;
+width: 375px;
+height: 812px;
+
+background: #FFFFFF;
+
+
+/* Frame */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+
+position: relative;
+width: 375px;
+height: 812px;
+
+background: #F5F6F8;
+
+
+/* 09 - Visitantes */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+isolation: isolate;
+
+position: relative;
+width: 375px;
+height: 812px;
+min-height: 812px;
+
+background: #F5F6F8;
+
+
+/* 10 - Autorizar visitante */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+
+position: relative;
+width: 375px;
+height: 812px;
+min-height: 812px;
+
+background: #FFFFFF;
+
+
+/* 11 - Encomendas */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+
+position: relative;
+width: 375px;
+height: 812px;
+min-height: 812px;
+
+background: #F5F6F8;
+
+
+/* 12 - Home do síndico */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 20px;
+gap: 20px;
+
+position: relative;
+width: 375px;
+height: 812px;
+min-height: 812px;
+
+background: #F5F6F8;
+
+
+/* 13 - Home do porteiro */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+
+position: relative;
+width: 375px;
+height: 812px;
+min-height: 812px;
+
+background: #F5F6F8;
+
+
+/* 14 - Registrar chegada de visitante */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+
+position: relative;
+width: 375px;
+height: 812px;
+min-height: 812px;
+
+background: #FFFFFF;
+
+
+/* 15 - Notificações */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+
+position: relative;
+width: 375px;
+height: 812px;
+min-height: 812px;
+
+background: #F5F6F8;
+
+
+/* 16 - Perfil e configurações */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+
+position: relative;
+width: 375px;
+height: 812px;
+min-height: 812px;
+
+background: #FFFFFF;
+
+
+/* historico-de-acessos */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+
+position: relative;
+width: 375px;
+height: 812px;
+
+background: #F5F6F8;
+
+
+/* controle-de-encomendas-porteiro */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+isolation: isolate;
+
+position: relative;
+width: 375px;
+height: 812px;
+
+background: #F5F6F8;
+
+
+/* busca-rapida */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+
+position: relative;
+width: 375px;
+height: 812px;
+
+background: #FFFFFF;
+
+
+/* livro-de-ocorrencias */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+
+position: relative;
+width: 375px;
+height: 812px;
+
+background: #F5F6F8;
+
+
+/* home-do-prestador */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+
+position: relative;
+width: 375px;
+height: 812px;
+
+background: #F5F6F8;
+
+
+/* detalhes-do-servico */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+
+position: relative;
+width: 375px;
+height: 812px;
+
+background: #F5F6F8;
+
+
+/* registrar-conclusao */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+
+position: relative;
+width: 375px;
+height: 812px;
+
+background: #FFFFFF;
+
+
+/* Frame */
+
+/* Auto layout */
+display: flex;
+flex-direction: column;
+align-items: flex-start;
+padding: 0px;
+
+position: relative;
+width: 375px;
+height: 812px;
+
+background: #F5F6F8;

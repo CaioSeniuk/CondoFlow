@@ -1,0 +1,32 @@
+# macOS
+.DS_Store
+
+# Claude Code local settings
+.claude/
+
+# Environment variables
+.env
+.env.local
+backend/.env
+frontend/.env
+
+# Editors
+.vscode/
+.idea/
+
+# Python / Django
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+db.sqlite3
+backend/media/
+backend/staticfiles/
+
+# Node / frontend
+node_modules/
+dist/
+frontend/dist/
+npm-debug.log*

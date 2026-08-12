@@ -37,3 +37,85 @@ O CondoFlow organiza esses fluxos em um só sistema, com quatro perfis de acesso
 ## Contexto do projeto
 
 Projeto acadêmico desenvolvido na disciplina de Medição e Análise de Processos e Produtos de Software (Engenharia de Software), com abordagem de Design Thinking: personas, mapa de empatia, storyboard e protótipo de interface.
+
+## Stack
+
+- **Backend:** Python + Django + Django REST Framework, autenticação JWT (`djangorestframework-simplejwt`), PostgreSQL (SQLite aceitável em desenvolvimento local), Pillow para tratamento de imagem, armazenamento de arquivos local (`MEDIA_ROOT`).
+- **Frontend:** React + Vite + Tailwind CSS + React Router + TanStack Query.
+- Sem Celery, Redis, WebSocket/Channels ou bucket externo — atualizações de status funcionam por polling simples do frontend.
+
+## Estrutura do backend
+
+O backend segue o padrão Model-Serializer-View (equivalente a MVC em uma API REST sem templates): `models.py` define os dados e regras de negócio, `serializers.py` representa os dados de entrada/saída, e `views.py` (ViewSets do DRF) atua como controller. Um app Django por domínio, todo o código em inglês:
+
+```
+backend/
+├── condoflow/      # configuração do projeto (settings, urls)
+├── core/           # models abstratos de auditoria (TimeStampedModel, AuditModel)
+├── users/          # autenticação, perfis (resident, manager, doorman, provider)
+├── announcements/  # comunicados
+├── packages/       # encomendas
+├── visitors/       # visitantes e QR Code
+├── tickets/        # chamados de manutenção
+├── providers/      # prestadores de serviço
+├── reservations/   # reserva de áreas comuns
+├── polls/          # enquetes
+└── finance/        # financeiro
+```
+
+## Instalação e execução
+
+### Opção 1 — Docker Compose (recomendado)
+
+```bash
+docker-compose up
+```
+
+Isso sobe o backend Django (porta 8000) e o PostgreSQL. Depois, em outro terminal, aplique as migrations e crie o superusuário:
+
+```bash
+docker-compose exec backend python manage.py migrate
+docker-compose exec backend python manage.py createsuperuser
+```
+
+### Opção 2 — Backend local (sem Docker)
+
+```bash
+cd backend
+python -m venv .venv
+source .venv/bin/activate        # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+cp .env.example .env             # ajuste as variáveis conforme necessário
+python manage.py migrate
+python manage.py createsuperuser
+python manage.py runserver
+```
+
+Por padrão, `.env.example` usa `DB_ENGINE=postgres`. Para rodar com SQLite localmente, defina `DB_ENGINE=sqlite` no `.env`.
+
+### Variáveis de ambiente (backend/.env)
+
+| Variável | Descrição |
+|---|---|
+| `SECRET_KEY` | Chave secreta do Django |
+| `DEBUG` | `True`/`False` |
+| `ALLOWED_HOSTS` | Hosts permitidos, separados por vírgula |
+| `DB_ENGINE` | `postgres` ou `sqlite` |
+| `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_HOST`, `DB_PORT` | Configuração do PostgreSQL (ignorado se `DB_ENGINE=sqlite`) |
+| `CORS_ALLOWED_ORIGINS` | Origens permitidas para o frontend consumir a API |
+
+### Frontend
+
+```bash
+cd frontend
+npm install
+cp .env.example .env             # ajuste VITE_API_URL se necessário
+npm run dev
+```
+
+### Testes
+
+```bash
+cd backend
+python manage.py test
+```
