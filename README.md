@@ -69,6 +69,7 @@ python manage.py runserver
 | `SECRET_KEY` | Chave secreta do Django |
 | `DEBUG` | `True`/`False` |
 | `ALLOWED_HOSTS` | Hosts permitidos, separados por vírgula |
+| `DATABASE_URL` | Connection string do Postgres (Supabase). Se ausente, usa SQLite local |
 | `CORS_ALLOWED_ORIGINS` | Origens permitidas para o frontend consumir a API |
 
 ### Frontend
