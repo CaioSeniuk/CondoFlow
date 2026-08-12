@@ -1,6 +1,6 @@
 from rest_framework.routers import DefaultRouter
 
-from finance.views import ExpenseCategoryViewSet, ExpenseViewSet
+from finance.api.views import ExpenseCategoryViewSet, ExpenseViewSet
 
 router = DefaultRouter()
 router.register("categories", ExpenseCategoryViewSet, basename="expensecategory")
