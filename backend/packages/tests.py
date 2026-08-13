@@ -1,10 +1,19 @@
+import io
+
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
+from PIL import Image
 from rest_framework import status
 from rest_framework.test import APITestCase
 
 from packages.models import Package
 from users.models import User
+
+
+def _fake_jpeg_bytes():
+    buffer = io.BytesIO()
+    Image.new("RGB", (1, 1), color="red").save(buffer, format="JPEG")
+    return buffer.getvalue()
 
 
 class PackageTests(APITestCase):
@@ -19,7 +28,7 @@ class PackageTests(APITestCase):
             block="A",
             apartment="101",
         )
-        self.photo = SimpleUploadedFile("photo.jpg", b"fake-image-bytes", content_type="image/jpeg")
+        self.photo = SimpleUploadedFile("photo.jpg", _fake_jpeg_bytes(), content_type="image/jpeg")
 
     def test_doorman_registers_package(self):
         self.client.force_authenticate(self.doorman)
