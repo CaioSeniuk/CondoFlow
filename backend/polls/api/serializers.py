@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from polls.models import Poll, PollOption, Vote
+from polls.services import PollService
 
 
 class PollOptionSerializer(serializers.ModelSerializer):
@@ -28,11 +29,8 @@ class PollSerializer(serializers.ModelSerializer):
         return Vote.objects.filter(option__poll=obj, resident=user).exists()
 
     def create(self, validated_data):
-        options_data = validated_data.pop("options")
-        poll = Poll.objects.create(**validated_data)
-        for option_data in options_data:
-            PollOption.objects.create(poll=poll, **option_data)
-        return poll
+        user = self.context["request"].user
+        return PollService().create_poll(validated_data, user)
 
 
 class VoteSerializer(serializers.Serializer):
