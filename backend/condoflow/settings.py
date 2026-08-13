@@ -67,11 +67,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "condoflow.wsgi.application"
 
-DATABASES = {
-    "default": dj_database_url.config(
-        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
-    )
-}
+DATABASES = {"default": dj_database_url.config()}
 
 AUTH_USER_MODEL = "users.User"
 
