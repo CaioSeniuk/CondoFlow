@@ -39,3 +39,8 @@ class AccessLogSerializer(serializers.ModelSerializer):
 class ValidateTokenSerializer(serializers.Serializer):
     token = serializers.UUIDField()
     direction = serializers.ChoiceField(choices=AccessLog.Direction.choices)
+
+
+class ValidateTokenResponseSerializer(serializers.Serializer):
+    visitor = VisitorSerializer()
+    access_log = AccessLogSerializer()
