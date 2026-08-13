@@ -1,13 +1,39 @@
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import extend_schema_view
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
+from core.schema import extend_schema_for_viewset
 from packages.api.serializers import PackagePickupSerializer, PackageSerializer
 from packages.services import PackageService
 from users.permissions import IsDoorman
 
+_package_docs = {
+    "list": {
+        "summary": "List packages",
+        "description": (
+            "Residents see only packages addressed to their own block/apartment. Managers "
+            "and doormen see every package."
+        ),
+    },
+    "retrieve": {"summary": "Retrieve a package"},
+    "create": {"summary": "Register a package", "description": "Doorman only."},
+    "update": {"summary": "Replace a package", "description": "Doorman only."},
+    "partial_update": {"summary": "Partially update a package", "description": "Doorman only."},
+    "destroy": {"summary": "Delete a package", "description": "Doorman only."},
+    "pickup": {
+        "summary": "Register package pickup",
+        "description": (
+            "Doorman only. Records who picked up the package, the timestamp, and the "
+            "doorman who released it, for traceability."
+        ),
+        "request": PackagePickupSerializer,
+        "responses": PackageSerializer,
+    },
+}
 
+
+@extend_schema_view(**extend_schema_for_viewset(_package_docs))
 class PackageViewSet(viewsets.ModelViewSet):
     serializer_class = PackageSerializer
     service = PackageService()
@@ -23,7 +49,6 @@ class PackageViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.instance = self.service.create(serializer.validated_data, self.request.user)
 
-    @extend_schema(request=PackagePickupSerializer, responses=PackageSerializer)
     @action(detail=True, methods=["post"])
     def pickup(self, request, pk=None):
         package = self.get_object()
