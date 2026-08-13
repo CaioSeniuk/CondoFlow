@@ -1,4 +1,5 @@
 from django.core.exceptions import ValidationError as DjangoValidationError
+from drf_spectacular.utils import extend_schema
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
@@ -18,6 +19,7 @@ class PollViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return self.service.list_for_user(self.request.user)
 
+    @extend_schema(request=VoteSerializer, responses=PollSerializer)
     @action(detail=True, methods=["post"], permission_classes=[IsResident])
     def vote(self, request, pk=None):
         poll = self.get_object()
