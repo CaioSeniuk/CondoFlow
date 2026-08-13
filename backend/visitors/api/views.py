@@ -1,9 +1,15 @@
+from drf_spectacular.utils import extend_schema
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from users.permissions import IsDoorman, IsManagerOrDoorman, IsResident
-from visitors.api.serializers import AccessLogSerializer, ValidateTokenSerializer, VisitorSerializer
+from visitors.api.serializers import (
+    AccessLogSerializer,
+    ValidateTokenResponseSerializer,
+    ValidateTokenSerializer,
+    VisitorSerializer,
+)
 from visitors.models import AccessLog
 from visitors.services import VisitorNotFound, VisitorService, VisitorTokenInvalid
 
@@ -23,6 +29,7 @@ class VisitorViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.instance = self.service.create(serializer.validated_data, self.request.user)
 
+    @extend_schema(request=ValidateTokenSerializer, responses=ValidateTokenResponseSerializer)
     @action(detail=False, methods=["post"], permission_classes=[IsDoorman])
     def validate_token(self, request):
         serializer = ValidateTokenSerializer(data=request.data)
