@@ -13,7 +13,7 @@ urlpatterns = [
     path("api/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("api/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     path("api/users/", include("users.urls")),
-    path("api/announcements/", include("announcements.urls")),
+    path("api/announcements/", include("announcements.api.urls")),
     path("api/packages/", include("packages.urls")),
     path("api/visitors/", include("visitors.urls")),
     path("api/tickets/", include("tickets.urls")),
