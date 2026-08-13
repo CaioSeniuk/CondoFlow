@@ -1,6 +1,7 @@
 from drf_spectacular.utils import extend_schema_view
 from rest_framework import viewsets
 from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from announcements.api.serializers import AnnouncementSerializer, ConfirmReadResponseSerializer
@@ -44,6 +45,11 @@ class AnnouncementViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         return self.service.list_for_user(self.request.user)
+
+    def get_permissions(self):
+        if self.action == "confirm_read":
+            return [IsAuthenticated()]
+        return super().get_permissions()
 
     def perform_create(self, serializer):
         serializer.instance = self.service.create(serializer.validated_data, self.request.user)
