@@ -36,3 +36,7 @@ class ReadConfirmationSerializer(serializers.ModelSerializer):
         model = ReadConfirmation
         fields = ("id", "announcement", "resident", "confirmed_at")
         read_only_fields = ("id", "resident", "confirmed_at")
+
+
+class ConfirmReadResponseSerializer(serializers.Serializer):
+    status = serializers.CharField()
