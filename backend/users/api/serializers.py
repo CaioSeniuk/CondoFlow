@@ -2,6 +2,7 @@ from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 
 from users.models import User
+from users.services import UserService
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -41,8 +42,4 @@ class RegisterSerializer(serializers.ModelSerializer):
         read_only_fields = ("id",)
 
     def create(self, validated_data):
-        password = validated_data.pop("password")
-        user = User(**validated_data)
-        user.set_password(password)
-        user.save()
-        return user
+        return UserService().register(validated_data)
