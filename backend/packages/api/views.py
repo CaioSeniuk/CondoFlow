@@ -1,3 +1,4 @@
+from drf_spectacular.utils import extend_schema
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -22,6 +23,7 @@ class PackageViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.instance = self.service.create(serializer.validated_data, self.request.user)
 
+    @extend_schema(request=PackagePickupSerializer, responses=PackageSerializer)
     @action(detail=True, methods=["post"])
     def pickup(self, request, pk=None):
         package = self.get_object()
