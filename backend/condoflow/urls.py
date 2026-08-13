@@ -18,7 +18,7 @@ urlpatterns = [
     path("api/visitors/", include("visitors.urls")),
     path("api/tickets/", include("tickets.urls")),
     path("api/providers/", include("providers.api.urls")),
-    path("api/reservations/", include("reservations.urls")),
+    path("api/reservations/", include("reservations.api.urls")),
     path("api/polls/", include("polls.urls")),
     path("api/finance/", include("finance.api.urls")),
 ]
