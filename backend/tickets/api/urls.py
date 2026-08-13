@@ -1,6 +1,6 @@
 from rest_framework.routers import DefaultRouter
 
-from tickets.views import TicketViewSet
+from tickets.api.views import TicketViewSet
 
 router = DefaultRouter()
 router.register("", TicketViewSet, basename="ticket")
