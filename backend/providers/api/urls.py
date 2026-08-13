@@ -1,6 +1,6 @@
 from rest_framework.routers import DefaultRouter
 
-from providers.views import EvidenceViewSet, ProviderViewSet
+from providers.api.views import EvidenceViewSet, ProviderViewSet
 
 router = DefaultRouter()
 router.register("evidences", EvidenceViewSet, basename="evidence")
