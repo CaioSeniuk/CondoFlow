@@ -1,6 +1,6 @@
 from rest_framework.routers import DefaultRouter
 
-from visitors.views import AccessLogViewSet, VisitorViewSet
+from visitors.api.views import AccessLogViewSet, VisitorViewSet
 
 router = DefaultRouter()
 router.register("access-logs", AccessLogViewSet, basename="accesslog")
