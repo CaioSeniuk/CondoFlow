@@ -24,6 +24,7 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt",
     "corsheaders",
     "drf_spectacular",
+    "storages",
     "core",
     "users",
     "announcements",
@@ -86,8 +87,26 @@ USE_TZ = True
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
-MEDIA_URL = "media/"
-MEDIA_ROOT = BASE_DIR / "media"
+# Fotos e documentos (encomendas, chamados, evidências de prestador) ficam no
+# Supabase Storage (bucket S3-compatible), não em disco local.
+STORAGES = {
+    "default": {
+        "BACKEND": "storages.backends.s3.S3Storage",
+        "OPTIONS": {
+            "access_key": os.getenv("SUPABASE_S3_ACCESS_KEY_ID"),
+            "secret_key": os.getenv("SUPABASE_S3_SECRET_ACCESS_KEY"),
+            "bucket_name": os.getenv("SUPABASE_S3_BUCKET_NAME"),
+            "endpoint_url": os.getenv("SUPABASE_S3_ENDPOINT_URL"),
+            "region_name": os.getenv("SUPABASE_S3_REGION", "us-east-1"),
+            "addressing_style": "path",
+            "querystring_auth": False,
+            "default_acl": None,
+        },
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+}
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
