@@ -24,7 +24,7 @@ Projeto acadêmico desenvolvido na disciplina de Medição e Análise de Process
 
 ## Stack
 
-- **Backend:** Python + Django + Django REST Framework, autenticação JWT (`djangorestframework-simplejwt`), Pillow para tratamento de imagem, armazenamento de arquivos local (`MEDIA_ROOT`).
+- **Backend:** Python + Django + Django REST Framework, autenticação JWT (`djangorestframework-simplejwt`), Pillow para tratamento de imagem, arquivos (fotos e documentos) armazenados no Supabase Storage via `django-storages`.
 - **Frontend:** React + Vite + Tailwind CSS + React Router + TanStack Query.
 - Sem Celery, Redis, WebSocket/Channels ou bucket externo — atualizações de status funcionam por polling simples do frontend.
 
@@ -70,6 +70,11 @@ python manage.py runserver
 | `DEBUG` | `True`/`False` |
 | `ALLOWED_HOSTS` | Hosts permitidos, separados por vírgula |
 | `DATABASE_URL` | Connection string do banco de dados (Supabase). Obrigatória — o backend não sobe sem ela |
+| `SUPABASE_S3_ACCESS_KEY_ID` | Access key da conexão S3 do Supabase Storage |
+| `SUPABASE_S3_SECRET_ACCESS_KEY` | Secret key da conexão S3 do Supabase Storage |
+| `SUPABASE_S3_BUCKET_NAME` | Nome do bucket onde ficam fotos e documentos |
+| `SUPABASE_S3_ENDPOINT_URL` | Endpoint S3 do projeto Supabase |
+| `SUPABASE_S3_REGION` | Região do bucket (padrão `us-east-1`) |
 | `CORS_ALLOWED_ORIGINS` | Origens permitidas para o frontend consumir a API |
 
 ### Frontend
