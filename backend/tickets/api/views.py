@@ -1,3 +1,4 @@
+from drf_spectacular.utils import extend_schema
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -28,6 +29,7 @@ class TicketViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.instance = self.service.create(serializer.validated_data, self.request.user)
 
+    @extend_schema(request=ChangeStatusSerializer, responses=TicketSerializer)
     @action(detail=True, methods=["post"])
     def change_status(self, request, pk=None):
         serializer = ChangeStatusSerializer(data=request.data)
@@ -40,6 +42,7 @@ class TicketViewSet(viewsets.ModelViewSet):
         )
         return Response(TicketSerializer(ticket).data)
 
+    @extend_schema(request=AssignProviderSerializer, responses=TicketSerializer)
     @action(detail=True, methods=["post"])
     def assign_provider(self, request, pk=None):
         serializer = AssignProviderSerializer(data=request.data)
