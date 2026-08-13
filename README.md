@@ -81,6 +81,21 @@ cp .env.example .env             # ajuste VITE_API_URL se necessário
 npm run dev
 ```
 
+### Documentação da API (Swagger)
+
+Com o backend rodando, a documentação interativa de cada endpoint (parâmetros, corpo de
+requisição, respostas, autenticação) fica disponível em:
+
+| URL | Descrição |
+|---|---|
+| `/api/docs/` | Swagger UI — explorar e testar endpoints |
+| `/api/redoc/` | Redoc — documentação em formato de leitura |
+| `/api/schema/` | Schema OpenAPI bruto (YAML) |
+
+A API é versionada sob `/api/v1/`. O schema é gerado automaticamente pelo `drf-spectacular` a
+partir das ViewSets do DRF, documentadas via `extend_schema`/`extend_schema_view` (ver
+`backend/core/schema.py`).
+
 ### Testes
 
 ```bash
