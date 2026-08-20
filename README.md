@@ -24,51 +24,70 @@ Projeto acadêmico desenvolvido na disciplina de Medição e Análise de Process
 
 ## Stack
 
-- **Backend:** Python + Django + Django REST Framework, autenticação JWT (`djangorestframework-simplejwt`), Pillow para tratamento de imagem, arquivos (fotos e documentos) armazenados no Supabase Storage via `django-storages`.
+- **Backend:** Node.js 26 + NestJS (TypeScript) + Prisma ORM, banco PostgreSQL no Supabase, autenticação JWT (`@nestjs/passport` + `passport-jwt`), validação com Zod (`nestjs-zod`), arquivos (fotos e documentos) armazenados no Supabase Storage via SDK S3.
 - **Frontend:** React + Vite + Tailwind CSS + React Router + TanStack Query.
 - Sem Celery, Redis, WebSocket/Channels ou bucket externo — atualizações de status funcionam por polling simples do frontend.
 
+> O backend foi migrado de Django/DRF para NestJS mantendo os mesmos endpoints, regras de negócio
+> e o banco Supabase existente. A implementação Python continua disponível na branch `dev`.
+
 ## Estrutura do backend
 
-O backend segue o padrão Model-Serializer-View (equivalente a MVC em uma API REST sem templates): `models.py` define os dados e regras de negócio, `serializers.py` representa os dados de entrada/saída, e `views.py` (ViewSets do DRF) atua como controller. Um app Django por domínio, todo o código em inglês:
+Um módulo NestJS por domínio, cada um em quatro camadas — `*.controller.ts` (rotas e guards),
+`*.service.ts` (regras de negócio e escopo por perfil), `*.repository.ts` (acesso ao banco via
+Prisma) e `dto/` (schemas Zod de entrada). Todo o código em inglês:
 
 ```
 backend/
-├── condoflow/      # configuração do projeto (settings, urls)
-├── core/           # models abstratos de auditoria (TimeStampedModel, AuditModel)
-├── users/          # autenticação, perfis (resident, manager, doorman, provider)
-├── announcements/  # comunicados
-├── packages/       # encomendas
-├── visitors/       # visitantes e QR Code
-├── tickets/        # chamados de manutenção
-├── providers/      # prestadores de serviço
-├── reservations/   # reserva de áreas comuns
-├── polls/          # enquetes
-└── finance/        # financeiro
+├── prisma/schema.prisma  # espelha as tabelas existentes no Supabase (@@map/@map)
+└── src/
+    ├── config/           # validação das variáveis de ambiente (Zod)
+    ├── prisma/           # PrismaService global
+    ├── storage/          # upload para o Supabase Storage (S3)
+    ├── auth/             # JWT, RolesGuard, compatibilidade com hashes PBKDF2 do Django
+    ├── common/           # auditoria (created_by/updated_by) e paginação
+    ├── users/            # autenticação, perfis (resident, manager, doorman, provider)
+    ├── announcements/    # comunicados
+    ├── packages/         # encomendas
+    ├── visitors/         # visitantes e QR Code
+    ├── tickets/          # chamados de manutenção
+    ├── providers/        # prestadores de serviço
+    ├── reservations/     # reserva de áreas comuns
+    ├── polls/            # enquetes
+    └── finance/          # financeiro
 ```
 
 ## Instalação e execução
 
-### Backend
+### Backend (Docker — recomendado)
+
+Não exige Node 26 instalado na máquina:
+
+```bash
+cp backend/.env.example backend/.env   # preencha as credenciais do Supabase
+docker compose up --build
+```
+
+### Backend (local, requer Node 26)
 
 ```bash
 cd backend
-python -m venv .venv
-source .venv/bin/activate        # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
-cp .env.example .env             # ajuste as variáveis conforme necessário
-python manage.py migrate
-python manage.py createsuperuser
-python manage.py runserver
+npm install
+cp .env.example .env             # preencha as credenciais do Supabase
+npx prisma generate
+npm run start:dev
 ```
 
 ### Variáveis de ambiente (backend/.env)
 
 | Variável | Descrição |
 |---|---|
-| `SECRET_KEY` | Chave secreta do Django |
-| `DEBUG` | `True`/`False` |
-| `ALLOWED_HOSTS` | Hosts permitidos, separados por vírgula |
+| `PORT` | Porta da API (padrão `8000`) |
+| `NODE_ENV` | `development`/`production`/`test` |
+| `JWT_ACCESS_SECRET` | Segredo usado para assinar o access token |
+| `JWT_REFRESH_SECRET` | Segredo usado para assinar o refresh token |
+| `JWT_ACCESS_EXPIRES_IN` | Validade do access token (padrão `1h`) |
+| `JWT_REFRESH_EXPIRES_IN` | Validade do refresh token (padrão `7d`) |
 | `DATABASE_URL` | Connection string do banco de dados (Supabase). Obrigatória — o backend não sobe sem ela |
 | `SUPABASE_S3_ACCESS_KEY_ID` | Access key da conexão S3 do Supabase Storage |
 | `SUPABASE_S3_SECRET_ACCESS_KEY` | Secret key da conexão S3 do Supabase Storage |
@@ -93,17 +112,29 @@ requisição, respostas, autenticação) fica disponível em:
 
 | URL | Descrição |
 |---|---|
-| `/api/docs/` | Swagger UI — explorar e testar endpoints |
-| `/api/redoc/` | Redoc — documentação em formato de leitura |
-| `/api/schema/` | Schema OpenAPI bruto (YAML) |
+| `/api/docs` | Swagger UI — explorar e testar endpoints |
+| `/api/docs-json` | Schema OpenAPI bruto (JSON) |
 
-A API é versionada sob `/api/v1/`. O schema é gerado automaticamente pelo `drf-spectacular` a
-partir das ViewSets do DRF, documentadas via `extend_schema`/`extend_schema_view` (ver
-`backend/core/schema.py`).
+A API é versionada sob `/api/v1/`. O schema é gerado automaticamente pelo `@nestjs/swagger` a
+partir dos controllers, documentados via `@ApiTags`/`@ApiOperation`.
+
+Endpoints de listagem devolvem o mesmo envelope paginado da implementação anterior
+(`{count, next, previous, results}`, 20 itens por página, parâmetro `?page=`).
+
+### Autenticação
+
+`POST /api/v1/token` devolve o par `{access, refresh}`; `POST /api/v1/token/refresh` rotaciona o
+par. Usuários criados na versão Django continuam conseguindo logar: a senha em PBKDF2 é validada
+e re-hasheada para bcrypt no primeiro login bem-sucedido, sem precisar de reset em massa.
 
 ### Testes
 
 ```bash
 cd backend
-python manage.py test
+npm run test        # regras de negócio (conflito de reserva, QR Code expirado, voto único, ...)
+npm run lint:check
+npm run typecheck
 ```
+
+A pipeline em `.github/workflows/backend-ci.yml` roda os mesmos passos no Node 26 e valida o build
+da imagem Docker. Nenhuma etapa da CI conecta no Supabase real.
