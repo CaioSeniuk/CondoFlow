@@ -14,19 +14,11 @@ frontend/.env
 .vscode/
 .idea/
 
-# Python / Django
-__pycache__/
-*.py[cod]
-*.egg-info/
-.venv/
-venv/
-env/
-db.sqlite3
-backend/media/
-backend/staticfiles/
 
 # Node / frontend
 node_modules/
 dist/
 frontend/dist/
 npm-debug.log*
+coverage/
+*.tsbuildinfo
