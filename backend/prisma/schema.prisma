@@ -1,0 +1,382 @@
+// Schema escrito manualmente para espelhar 1:1 as tabelas já criadas pelas
+// migrations do Django (nomes de tabela/coluna preservados via @@map/@map).
+// Antes de aplicar em produção, valide com `npx prisma db pull` contra o
+// DATABASE_URL real e reconcilie qualquer divergência.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  resident
+  manager
+  doorman
+  provider
+}
+
+model User {
+  id          BigInt   @id @default(autoincrement())
+  password    String
+  lastLogin   DateTime? @map("last_login")
+  isSuperuser Boolean  @default(false) @map("is_superuser")
+  username    String   @unique
+  firstName   String   @map("first_name")
+  lastName    String   @map("last_name")
+  email       String
+  isStaff     Boolean  @default(false) @map("is_staff")
+  isActive    Boolean  @default(true) @map("is_active")
+  dateJoined  DateTime @default(now()) @map("date_joined")
+  role        UserRole
+  block       String   @default("")
+  apartment   String   @default("")
+  phone       String   @default("")
+
+  announcementsCreated  Announcement[]     @relation("AnnouncementCreatedBy")
+  announcementsUpdated  Announcement[]     @relation("AnnouncementUpdatedBy")
+  readConfirmations     ReadConfirmation[]
+  packagesCreated       Package[]          @relation("PackageCreatedBy")
+  packagesUpdated       Package[]          @relation("PackageUpdatedBy")
+  packagesReleased      Package[]          @relation("PackageReleasedBy")
+  visitorsCreated       Visitor[]          @relation("VisitorCreatedBy")
+  visitorsUpdated       Visitor[]          @relation("VisitorUpdatedBy")
+  accessLogsRegistered  AccessLog[]
+  tickets               Ticket[]           @relation("TicketResident")
+  ticketsCreated        Ticket[]           @relation("TicketCreatedBy")
+  ticketsUpdated        Ticket[]           @relation("TicketUpdatedBy")
+  statusHistoryChanged  StatusHistory[]
+  providerProfile       Provider?          @relation("ProviderUser")
+  providersCreated      Provider[]         @relation("ProviderCreatedBy")
+  providersUpdated      Provider[]         @relation("ProviderUpdatedBy")
+  evidencesCreated      Evidence[]         @relation("EvidenceCreatedBy")
+  evidencesUpdated      Evidence[]         @relation("EvidenceUpdatedBy")
+  commonAreasCreated    CommonArea[]       @relation("CommonAreaCreatedBy")
+  commonAreasUpdated    CommonArea[]       @relation("CommonAreaUpdatedBy")
+  reservations          Reservation[]      @relation("ReservationResident")
+  reservationsCreated   Reservation[]      @relation("ReservationCreatedBy")
+  reservationsUpdated   Reservation[]      @relation("ReservationUpdatedBy")
+  pollsCreated          Poll[]             @relation("PollCreatedBy")
+  pollsUpdated          Poll[]             @relation("PollUpdatedBy")
+  votes                 Vote[]
+  expenseCategoriesCreated ExpenseCategory[] @relation("ExpenseCategoryCreatedBy")
+  expenseCategoriesUpdated ExpenseCategory[] @relation("ExpenseCategoryUpdatedBy")
+  expensesCreated       Expense[]          @relation("ExpenseCreatedBy")
+  expensesUpdated       Expense[]          @relation("ExpenseUpdatedBy")
+
+  @@map("users_user")
+}
+
+enum AnnouncementSegment {
+  all
+  block
+  apartment
+}
+
+model Announcement {
+  id          BigInt              @id @default(autoincrement())
+  createdAt   DateTime            @default(now()) @map("created_at")
+  updatedAt   DateTime            @updatedAt @map("updated_at")
+  createdById BigInt?             @map("created_by_id")
+  updatedById BigInt?             @map("updated_by_id")
+  title       String
+  message     String
+  segment     AnnouncementSegment @default(all)
+  block       String              @default("")
+  apartment   String              @default("")
+  urgent      Boolean             @default(false)
+
+  createdBy     User?              @relation("AnnouncementCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedBy     User?              @relation("AnnouncementUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+  confirmations ReadConfirmation[]
+
+  @@map("announcements_announcement")
+}
+
+model ReadConfirmation {
+  id             BigInt       @id @default(autoincrement())
+  announcementId BigInt       @map("announcement_id")
+  residentId     BigInt       @map("resident_id")
+  confirmedAt    DateTime     @default(now()) @map("confirmed_at")
+
+  announcement Announcement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+  resident     User         @relation(fields: [residentId], references: [id], onDelete: Cascade)
+
+  @@unique([announcementId, residentId])
+  @@map("announcements_readconfirmation")
+}
+
+enum PackageStatus {
+  pending
+  picked_up
+}
+
+model Package {
+  id           BigInt        @id @default(autoincrement())
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @updatedAt @map("updated_at")
+  createdById  BigInt?       @map("created_by_id")
+  updatedById  BigInt?       @map("updated_by_id")
+  block        String
+  apartment    String
+  description  String        @default("")
+  photo        String
+  status       PackageStatus @default(pending)
+  pickedUpAt   DateTime?     @map("picked_up_at")
+  pickedUpBy   String        @default("") @map("picked_up_by")
+  releasedById BigInt?       @map("released_by_id")
+
+  createdBy  User? @relation("PackageCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedBy  User? @relation("PackageUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+  releasedBy User? @relation("PackageReleasedBy", fields: [releasedById], references: [id], onDelete: SetNull)
+
+  @@map("packages_package")
+}
+
+model Visitor {
+  id          BigInt   @id @default(autoincrement())
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  createdById BigInt?  @map("created_by_id")
+  updatedById BigInt?  @map("updated_by_id")
+  name        String
+  document    String   @default("")
+  block       String
+  apartment   String
+  token       String   @unique @default(uuid())
+  validFrom   DateTime @map("valid_from")
+  validUntil  DateTime @map("valid_until")
+
+  createdBy  User?       @relation("VisitorCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedBy  User?       @relation("VisitorUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+  accessLogs AccessLog[]
+
+  @@map("visitors_visitor")
+}
+
+enum AccessDirection {
+  entry
+  exit
+}
+
+model AccessLog {
+  id             BigInt          @id @default(autoincrement())
+  visitorId      BigInt          @map("visitor_id")
+  direction      AccessDirection
+  registeredById BigInt?         @map("registered_by_id")
+  registeredAt   DateTime        @default(now()) @map("registered_at")
+
+  visitor      Visitor @relation(fields: [visitorId], references: [id], onDelete: Cascade)
+  registeredBy User?   @relation(fields: [registeredById], references: [id], onDelete: SetNull)
+
+  @@map("visitors_accesslog")
+}
+
+enum TicketUrgency {
+  low
+  medium
+  high
+}
+
+enum TicketStatus {
+  open
+  under_review
+  provider_assigned
+  in_progress
+  resolved
+}
+
+model Ticket {
+  id          BigInt        @id @default(autoincrement())
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+  createdById BigInt?       @map("created_by_id")
+  updatedById BigInt?       @map("updated_by_id")
+  residentId  BigInt        @map("resident_id")
+  category    String
+  location    String
+  description String
+  photo       String?
+  urgency     TicketUrgency @default(low)
+  status      TicketStatus  @default(open)
+  providerId  BigInt?       @map("provider_id")
+
+  resident      User            @relation("TicketResident", fields: [residentId], references: [id], onDelete: Cascade)
+  provider      Provider?       @relation(fields: [providerId], references: [id], onDelete: SetNull)
+  createdBy     User?           @relation("TicketCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedBy     User?           @relation("TicketUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+  statusHistory StatusHistory[]
+  evidences     Evidence[]
+
+  @@map("tickets_ticket")
+}
+
+model StatusHistory {
+  id          BigInt       @id @default(autoincrement())
+  ticketId    BigInt       @map("ticket_id")
+  status      TicketStatus
+  changedById BigInt?      @map("changed_by_id")
+  changedAt   DateTime     @default(now()) @map("changed_at")
+  note        String       @default("")
+
+  ticket    Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  changedBy User?  @relation(fields: [changedById], references: [id], onDelete: SetNull)
+
+  @@map("tickets_statushistory")
+}
+
+model Provider {
+  id             BigInt   @id @default(autoincrement())
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+  createdById    BigInt?  @map("created_by_id")
+  updatedById    BigInt?  @map("updated_by_id")
+  name           String
+  contractNumber String   @default("") @map("contract_number")
+  contact        String   @default("")
+  document       String?
+  userId         BigInt?  @unique @map("user_id")
+
+  user      User?      @relation("ProviderUser", fields: [userId], references: [id], onDelete: SetNull)
+  createdBy User?      @relation("ProviderCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedBy User?      @relation("ProviderUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+  tickets   Ticket[]
+
+  @@map("providers_provider")
+}
+
+model Evidence {
+  id           BigInt   @id @default(autoincrement())
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+  createdById  BigInt?  @map("created_by_id")
+  updatedById  BigInt?  @map("updated_by_id")
+  ticketId     BigInt   @map("ticket_id")
+  beforePhoto  String?  @map("before_photo")
+  afterPhoto   String?  @map("after_photo")
+  notes        String   @default("")
+
+  ticket    Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  createdBy User?  @relation("EvidenceCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedBy User?  @relation("EvidenceUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+
+  @@map("providers_evidence")
+}
+
+model CommonArea {
+  id          BigInt   @id @default(autoincrement())
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  createdById BigInt?  @map("created_by_id")
+  updatedById BigInt?  @map("updated_by_id")
+  name        String
+  description String   @default("")
+
+  createdBy    User?         @relation("CommonAreaCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedBy    User?         @relation("CommonAreaUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+  reservations Reservation[]
+
+  @@map("reservations_commonarea")
+}
+
+enum ReservationStatus {
+  confirmed
+  cancelled
+}
+
+model Reservation {
+  id           BigInt            @id @default(autoincrement())
+  createdAt    DateTime          @default(now()) @map("created_at")
+  updatedAt    DateTime          @updatedAt @map("updated_at")
+  createdById  BigInt?           @map("created_by_id")
+  updatedById  BigInt?           @map("updated_by_id")
+  commonAreaId BigInt            @map("common_area_id")
+  residentId   BigInt            @map("resident_id")
+  startTime    DateTime          @map("start_time")
+  endTime      DateTime          @map("end_time")
+  status       ReservationStatus @default(confirmed)
+
+  commonArea CommonArea @relation(fields: [commonAreaId], references: [id], onDelete: Cascade)
+  resident   User       @relation("ReservationResident", fields: [residentId], references: [id], onDelete: Cascade)
+  createdBy  User?      @relation("ReservationCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedBy  User?      @relation("ReservationUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+
+  @@map("reservations_reservation")
+}
+
+model Poll {
+  id          BigInt    @id @default(autoincrement())
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  createdById BigInt?   @map("created_by_id")
+  updatedById BigInt?   @map("updated_by_id")
+  question    String
+  closesAt    DateTime? @map("closes_at")
+
+  createdBy User?        @relation("PollCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedBy User?        @relation("PollUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+  options   PollOption[]
+
+  @@map("polls_poll")
+}
+
+model PollOption {
+  id     BigInt @id @default(autoincrement())
+  pollId BigInt @map("poll_id")
+  text   String
+
+  poll  Poll   @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  votes Vote[]
+
+  @@map("polls_polloption")
+}
+
+model Vote {
+  id         BigInt   @id @default(autoincrement())
+  optionId   BigInt   @map("option_id")
+  residentId BigInt   @map("resident_id")
+  votedAt    DateTime @default(now()) @map("voted_at")
+
+  option   PollOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  resident User       @relation(fields: [residentId], references: [id], onDelete: Cascade)
+
+  @@unique([optionId, residentId])
+  @@map("polls_vote")
+}
+
+model ExpenseCategory {
+  id          BigInt   @id @default(autoincrement())
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  createdById BigInt?  @map("created_by_id")
+  updatedById BigInt?  @map("updated_by_id")
+  name        String   @unique
+
+  createdBy User?     @relation("ExpenseCategoryCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedBy User?     @relation("ExpenseCategoryUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+  expenses  Expense[]
+
+  @@map("finance_expensecategory")
+}
+
+model Expense {
+  id              BigInt   @id @default(autoincrement())
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  createdById     BigInt?  @map("created_by_id")
+  updatedById     BigInt?  @map("updated_by_id")
+  categoryId      BigInt   @map("category_id")
+  description     String   @default("")
+  referenceMonth  DateTime @map("reference_month") @db.Date
+  budgetedAmount  Decimal  @map("budgeted_amount") @db.Decimal(10, 2)
+  actualAmount    Decimal  @default(0) @map("actual_amount") @db.Decimal(10, 2)
+
+  category  ExpenseCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  createdBy User?           @relation("ExpenseCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedBy User?           @relation("ExpenseUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+
+  @@map("finance_expense")
+}
