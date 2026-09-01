@@ -2,7 +2,6 @@ import {
   Body,
   Controller,
   Delete,
-  Get,
   Param,
   ParseIntPipe,
   Patch,
@@ -15,41 +14,33 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Roles } from '../auth/roles.decorator';
-import { assertVisible } from '../common/access';
 import { RolesGuard } from '../auth/roles.guard';
-import { UserRole } from '@prisma/client';
+import { Package, UserRole } from '@prisma/client';
 import { StorageService } from '../storage/storage.service';
 import { AuthenticatedUser } from '../auth/authenticated-user.interface';
 import { PackagesService } from './packages.service';
 import { CreatePackageDto, PickupPackageDto, UpdatePackageDto } from './dto/package.dto';
+import { ScopedResourceController } from '../common/scoped-resource.controller';
 
 @ApiTags('packages')
 @UseGuards(RolesGuard)
 @Controller('api/v1/packages')
-export class PackagesController {
+export class PackagesController extends ScopedResourceController<Package>({
+  listSummary: 'List packages',
+  listDescription:
+    'Residents see only packages addressed to their own block/apartment. Managers and doormen see every package.',
+  retrieveSummary: 'Retrieve a package',
+  retrieveDescription:
+    'Residents can only retrieve packages for their own block/apartment; anything else responds 404.',
+}) {
+  service: PackagesService;
+
   constructor(
-    private service: PackagesService,
+    service: PackagesService,
     private storage: StorageService,
-  ) {}
-
-  @Get()
-  @ApiOperation({
-    summary: 'List packages',
-    description:
-      'Residents see only packages addressed to their own block/apartment. Managers and doormen see every package.',
-  })
-  list(@Req() req: { user: AuthenticatedUser }) {
-    return this.service.listForUser(req.user);
-  }
-
-  @Get(':id')
-  @ApiOperation({
-    summary: 'Retrieve a package',
-    description:
-      'Residents can only retrieve packages for their own block/apartment; anything else responds 404.',
-  })
-  async retrieve(@Param('id', ParseIntPipe) id: number, @Req() req: { user: AuthenticatedUser }) {
-    return assertVisible(await this.service.findByIdForUser(BigInt(id), req.user));
+  ) {
+    super();
+    this.service = service;
   }
 
   @Post()

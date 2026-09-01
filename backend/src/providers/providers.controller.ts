@@ -2,7 +2,6 @@ import {
   Body,
   Controller,
   Delete,
-  Get,
   Param,
   ParseIntPipe,
   Patch,
@@ -15,9 +14,8 @@ import {
 } from '@nestjs/common';
 import { FileFieldsInterceptor, FileInterceptor } from '@nestjs/platform-express';
 import { ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { UserRole } from '@prisma/client';
+import { Evidence, Provider, UserRole } from '@prisma/client';
 import { Roles } from '../auth/roles.decorator';
-import { assertVisible } from '../common/access';
 import { RolesGuard } from '../auth/roles.guard';
 import { AuthenticatedUser } from '../auth/authenticated-user.interface';
 import { StorageService } from '../storage/storage.service';
@@ -28,6 +26,7 @@ import {
   UpdateEvidenceDto,
   UpdateProviderDto,
 } from './dto/provider.dto';
+import { ScopedResourceController } from '../common/scoped-resource.controller';
 
 type EvidenceFiles = {
   beforePhoto?: Express.Multer.File[];
@@ -42,30 +41,22 @@ const evidenceUpload = FileFieldsInterceptor([
 @ApiTags('providers')
 @UseGuards(RolesGuard)
 @Controller('api/v1/providers/evidences')
-export class EvidenceController {
+export class EvidenceController extends ScopedResourceController<Evidence>({
+  listSummary: 'List service evidence',
+  listDescription:
+    'Providers see evidence for their own tickets. Residents see evidence for their own tickets. Managers see every evidence.',
+  retrieveSummary: 'Retrieve a piece of evidence',
+  retrieveDescription:
+    "Scoped the same way as the list: anything outside the caller's own tickets responds 404.",
+}) {
+  service: EvidenceService;
+
   constructor(
-    private service: EvidenceService,
+    service: EvidenceService,
     private storage: StorageService,
-  ) {}
-
-  @Get()
-  @ApiOperation({
-    summary: 'List service evidence',
-    description:
-      'Providers see evidence for their own tickets. Residents see evidence for their own tickets. Managers see every evidence.',
-  })
-  list(@Req() req: { user: AuthenticatedUser }) {
-    return this.service.listForUser(req.user);
-  }
-
-  @Get(':id')
-  @ApiOperation({
-    summary: 'Retrieve a piece of evidence',
-    description:
-      "Scoped the same way as the list: anything outside the caller's own tickets responds 404.",
-  })
-  async retrieve(@Param('id', ParseIntPipe) id: number, @Req() req: { user: AuthenticatedUser }) {
-    return assertVisible(await this.service.findByIdForUser(BigInt(id), req.user));
+  ) {
+    super();
+    this.service = service;
   }
 
   @Post()
@@ -121,29 +112,21 @@ export class EvidenceController {
 @ApiTags('providers')
 @UseGuards(RolesGuard)
 @Controller('api/v1/providers')
-export class ProvidersController {
+export class ProvidersController extends ScopedResourceController<Provider>({
+  listSummary: 'List providers',
+  listDescription:
+    'Managers see every provider. Providers see only their own profile. Residents and doormen see no results.',
+  retrieveSummary: 'Retrieve a provider',
+  retrieveDescription: 'Providers can only retrieve their own profile; anything else responds 404.',
+}) {
+  service: ProvidersService;
+
   constructor(
-    private service: ProvidersService,
+    service: ProvidersService,
     private storage: StorageService,
-  ) {}
-
-  @Get()
-  @ApiOperation({
-    summary: 'List providers',
-    description:
-      'Managers see every provider. Providers see only their own profile. Residents and doormen see no results.',
-  })
-  list(@Req() req: { user: AuthenticatedUser }) {
-    return this.service.listForUser(req.user);
-  }
-
-  @Get(':id')
-  @ApiOperation({
-    summary: 'Retrieve a provider',
-    description: 'Providers can only retrieve their own profile; anything else responds 404.',
-  })
-  async retrieve(@Param('id', ParseIntPipe) id: number, @Req() req: { user: AuthenticatedUser }) {
-    return assertVisible(await this.service.findByIdForUser(BigInt(id), req.user));
+  ) {
+    super();
+    this.service = service;
   }
 
   @Post()
