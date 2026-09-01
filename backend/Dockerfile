@@ -1,19 +1,30 @@
-FROM python:3.12-slim
-
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
+FROM node:26-alpine AS build
 
 WORKDIR /app
 
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends libpq-dev gcc \
-    && rm -rf /var/lib/apt/lists/*
+COPY package*.json ./
+RUN npm ci
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+COPY prisma ./prisma
+RUN npx prisma generate
 
-COPY . .
+COPY tsconfig*.json nest-cli.json ./
+COPY src ./src
+RUN npm run build
+
+
+FROM node:26-alpine AS runtime
+
+WORKDIR /app
+ENV NODE_ENV=production
+
+COPY package*.json ./
+RUN npm ci --omit=dev
+
+COPY prisma ./prisma
+RUN npx prisma generate
+
+COPY --from=build /app/dist ./dist
 
 EXPOSE 8000
-
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+CMD ["node", "dist/main.js"]
