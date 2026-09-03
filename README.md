@@ -57,6 +57,25 @@ backend/
     └── finance/          # financeiro
 ```
 
+## Design pattern: Chain of Responsibility
+
+Regras de validação em etapas encadeadas usam o padrão **Chain of Responsibility**, com um
+`Handler<TRequest, TResult>` abstrato único (`backend/src/common/handler.ts`) reaproveitado pelos
+três exemplos abaixo — cada handler concreto resolve sua checagem ou delega para o próximo elo via
+`super.handle(request)`:
+
+| Domínio | Chain | Handlers |
+|---|---|---|
+| Visitantes | `visitors/token-validation.chain.ts` | `VisitorExistsHandler` → `TokenWithinValidityWindowHandler` |
+| Chamados | `tickets/status-transition.chain.ts` | `NoNoOpTransitionHandler` → `NotAlreadyResolvedHandler` → `RequiresProviderHandler` |
+| Comunicados | `announcements/visibility.chain.ts` | `AllSegmentHandler` → `BlockSegmentHandler` → `ApartmentSegmentHandler` |
+
+A validação de visitantes e a resolução de visibilidade de comunicados são refactors de lógica já
+existente; a de chamados introduz uma regra nova em `TicketsService.changeStatus`: não permite
+manter o mesmo status (no-op), não permite alterar um chamado já resolvido e exige prestador
+atribuído antes de mover para `in_progress`/`resolved`. Cada chain tem spec própria
+(`*.chain.spec.ts`) cobrindo os handlers isoladamente.
+
 ## Instalação e execução
 
 ### Backend (Docker — recomendado)

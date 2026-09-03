@@ -1,21 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import { Announcement, AnnouncementSegment, ReadConfirmation, UserRole } from '@prisma/client';
+import { Announcement, ReadConfirmation, UserRole } from '@prisma/client';
 import { auditOnCreate, auditOnUpdate } from '../common/audit';
 import { assertVisible } from '../common/access';
 import { AuthenticatedUser } from '../auth/authenticated-user.interface';
 import { AnnouncementsRepository } from './announcements.repository';
 import { CreateAnnouncementDto, UpdateAnnouncementDto } from './dto/announcement.dto';
+import { isVisibleTo } from './visibility.chain';
 
 type AnnouncementWithConfirmations = Announcement & { confirmations: ReadConfirmation[] };
-
-function isVisibleTo(announcement: Announcement, user: AuthenticatedUser): boolean {
-  if (announcement.segment === AnnouncementSegment.all) return true;
-  if (announcement.segment === AnnouncementSegment.block) return user.block === announcement.block;
-  if (announcement.segment === AnnouncementSegment.apartment) {
-    return user.block === announcement.block && user.apartment === announcement.apartment;
-  }
-  return false;
-}
 
 @Injectable()
 export class AnnouncementsService {

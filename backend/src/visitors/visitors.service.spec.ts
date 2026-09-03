@@ -1,9 +1,6 @@
 import { AccessDirection, UserRole, Visitor } from '@prisma/client';
-import {
-  VisitorTokenInvalidError,
-  VisitorNotFoundError,
-  VisitorsService,
-} from './visitors.service';
+import { VisitorsService } from './visitors.service';
+import { VisitorTokenInvalidError, VisitorNotFoundError } from './visitors.errors';
 import { AccessLogRepository, VisitorsRepository } from './visitors.repository';
 import { AuthenticatedUser } from '../auth/authenticated-user.interface';
 
