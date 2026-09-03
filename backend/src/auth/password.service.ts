@@ -5,7 +5,7 @@ import * as crypto from 'crypto';
 const BCRYPT_ROUNDS = 12;
 const DJANGO_PBKDF2_PREFIX = 'pbkdf2_sha256$';
 /** Só serve para gerar um hash descartável com o mesmo custo do real (ver runDummyVerify). */
-const DUMMY_PASSWORD = 'condoflow-timing-equalizer';
+const TIMING_EQUALIZER_INPUT = 'condoflow-timing-equalizer';
 
 @Injectable()
 export class PasswordService {
@@ -32,7 +32,7 @@ export class PasswordService {
    * por tempo de resposta. É a mesma mitigação do `ModelBackend.authenticate` do Django.
    */
   async runDummyVerify(plain: string): Promise<void> {
-    this.dummyHash ??= this.hash(DUMMY_PASSWORD);
+    this.dummyHash ??= this.hash(TIMING_EQUALIZER_INPUT);
     await bcrypt.compare(plain, await this.dummyHash);
   }
 

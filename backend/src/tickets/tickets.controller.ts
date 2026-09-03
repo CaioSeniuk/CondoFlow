@@ -2,7 +2,6 @@ import {
   Body,
   Controller,
   Delete,
-  Get,
   Param,
   ParseIntPipe,
   Patch,
@@ -15,9 +14,8 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Roles } from '../auth/roles.decorator';
-import { assertVisible } from '../common/access';
 import { RolesGuard } from '../auth/roles.guard';
-import { UserRole } from '@prisma/client';
+import { Ticket, UserRole } from '@prisma/client';
 import { StorageService } from '../storage/storage.service';
 import { AuthenticatedUser } from '../auth/authenticated-user.interface';
 import { TicketsService } from './tickets.service';
@@ -27,34 +25,27 @@ import {
   CreateTicketDto,
   UpdateTicketDto,
 } from './dto/ticket.dto';
+import { ScopedResourceController } from '../common/scoped-resource.controller';
 
 @ApiTags('tickets')
 @UseGuards(RolesGuard)
 @Controller('api/v1/tickets')
-export class TicketsController {
+export class TicketsController extends ScopedResourceController<Ticket>({
+  listSummary: 'List tickets',
+  listDescription:
+    'Residents see only their own tickets. Providers see only tickets assigned to them. Managers see every ticket.',
+  retrieveSummary: 'Retrieve a ticket',
+  retrieveDescription:
+    'Residents can only retrieve their own tickets and providers only the ones assigned to them; anything else responds 404.',
+}) {
+  service: TicketsService;
+
   constructor(
-    private service: TicketsService,
+    service: TicketsService,
     private storage: StorageService,
-  ) {}
-
-  @Get()
-  @ApiOperation({
-    summary: 'List tickets',
-    description:
-      'Residents see only their own tickets. Providers see only tickets assigned to them. Managers see every ticket.',
-  })
-  list(@Req() req: { user: AuthenticatedUser }) {
-    return this.service.listForUser(req.user);
-  }
-
-  @Get(':id')
-  @ApiOperation({
-    summary: 'Retrieve a ticket',
-    description:
-      'Residents can only retrieve their own tickets and providers only the ones assigned to them; anything else responds 404.',
-  })
-  async retrieve(@Param('id', ParseIntPipe) id: number, @Req() req: { user: AuthenticatedUser }) {
-    return assertVisible(await this.service.findByIdForUser(BigInt(id), req.user));
+  ) {
+    super();
+    this.service = service;
   }
 
   @Post()

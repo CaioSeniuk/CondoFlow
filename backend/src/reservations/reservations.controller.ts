@@ -12,9 +12,8 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { UserRole } from '@prisma/client';
+import { Reservation, UserRole } from '@prisma/client';
 import { Roles } from '../auth/roles.decorator';
-import { assertVisible } from '../common/access';
 import { RolesGuard } from '../auth/roles.guard';
 import { ManagerOrReadOnlyGuard } from '../auth/manager-or-read-only.guard';
 import { AuthenticatedUser } from '../auth/authenticated-user.interface';
@@ -25,6 +24,7 @@ import {
   UpdateCommonAreaDto,
   UpdateReservationDto,
 } from './dto/reservation.dto';
+import { ScopedResourceController } from '../common/scoped-resource.controller';
 
 @ApiTags('reservations')
 @UseGuards(ManagerOrReadOnlyGuard)
@@ -72,25 +72,18 @@ export class CommonAreasController {
 @ApiTags('reservations')
 @UseGuards(RolesGuard)
 @Controller('api/v1/reservations')
-export class ReservationsController {
-  constructor(private service: ReservationsService) {}
+export class ReservationsController extends ScopedResourceController<Reservation>({
+  listSummary: 'List reservations',
+  listDescription: 'Residents see only their own reservations. Managers see every reservation.',
+  retrieveSummary: 'Retrieve a reservation',
+  retrieveDescription:
+    'Residents can only retrieve their own reservations; anything else responds 404.',
+}) {
+  service: ReservationsService;
 
-  @Get()
-  @ApiOperation({
-    summary: 'List reservations',
-    description: 'Residents see only their own reservations. Managers see every reservation.',
-  })
-  list(@Req() req: { user: AuthenticatedUser }) {
-    return this.service.listForUser(req.user);
-  }
-
-  @Get(':id')
-  @ApiOperation({
-    summary: 'Retrieve a reservation',
-    description: 'Residents can only retrieve their own reservations; anything else responds 404.',
-  })
-  async retrieve(@Param('id', ParseIntPipe) id: number, @Req() req: { user: AuthenticatedUser }) {
-    return assertVisible(await this.service.findByIdForUser(BigInt(id), req.user));
+  constructor(service: ReservationsService) {
+    super();
+    this.service = service;
   }
 
   @Post()
