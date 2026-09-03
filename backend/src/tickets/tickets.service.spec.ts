@@ -52,7 +52,7 @@ describe('TicketsService', () => {
     const update = jest.fn().mockResolvedValue({ id: 5n });
     const historyCreate = jest.fn().mockResolvedValue({ id: 2n });
     const service = makeService(
-      { update, findById: jest.fn().mockResolvedValue({ id: 5n }) },
+      { update, findById: jest.fn().mockResolvedValue({ id: 5n, status: TicketStatus.open }) },
       { create: historyCreate },
     );
 
@@ -68,6 +68,21 @@ describe('TicketsService', () => {
       manager.id,
       'Checking',
     );
+  });
+
+  it('rejects a status transition that the chain of responsibility does not allow', async () => {
+    const update = jest.fn();
+    const historyCreate = jest.fn();
+    const service = makeService(
+      { findById: jest.fn().mockResolvedValue({ id: 5n, status: TicketStatus.resolved }), update },
+      { create: historyCreate },
+    );
+
+    await expect(
+      service.changeStatus(5n, TicketStatus.under_review, 'Reopen', manager),
+    ).rejects.toThrow();
+    expect(update).not.toHaveBeenCalled();
+    expect(historyCreate).not.toHaveBeenCalled();
   });
 
   it('scopes each role to the tickets it may see', async () => {

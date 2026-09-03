@@ -5,17 +5,12 @@ import { assertVisible } from '../common/access';
 import { AuthenticatedUser } from '../auth/authenticated-user.interface';
 import { AccessLogRepository, VisitorsRepository } from './visitors.repository';
 import { CreateVisitorDto } from './dto/visitor.dto';
-
-export class VisitorNotFoundError extends Error {}
-export class VisitorTokenInvalidError extends Error {}
-
-function isValid(visitor: Visitor): boolean {
-  const now = new Date();
-  return visitor.validFrom <= now && now <= visitor.validUntil;
-}
+import { buildTokenValidationChain, isWithinValidityWindow } from './token-validation.chain';
 
 @Injectable()
 export class VisitorsService {
+  private readonly tokenValidationChain = buildTokenValidationChain();
+
   constructor(
     private repo: VisitorsRepository,
     private accessLogRepo: AccessLogRepository,
@@ -65,15 +60,14 @@ export class VisitorsService {
   }
 
   isValid(visitor: Visitor) {
-    return isValid(visitor);
+    return isWithinValidityWindow(visitor, new Date());
   }
 
   async validateToken(token: string, direction: AccessDirection, actor: AuthenticatedUser) {
     const visitor = await this.repo.findByToken(token);
-    if (!visitor) throw new VisitorNotFoundError();
-    if (!isValid(visitor)) throw new VisitorTokenInvalidError();
+    this.tokenValidationChain.handle({ visitor, now: new Date() });
 
-    const accessLog = await this.accessLogRepo.create(visitor.id, direction, actor.id);
-    return { visitor, accessLog };
+    const accessLog = await this.accessLogRepo.create(visitor!.id, direction, actor.id);
+    return { visitor: visitor!, accessLog };
   }
 }

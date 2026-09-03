@@ -20,11 +20,8 @@ import { assertVisible } from '../common/access';
 import { RolesGuard } from '../auth/roles.guard';
 import { UserRole } from '@prisma/client';
 import { AuthenticatedUser } from '../auth/authenticated-user.interface';
-import {
-  VisitorsService,
-  VisitorNotFoundError,
-  VisitorTokenInvalidError,
-} from './visitors.service';
+import { VisitorsService } from './visitors.service';
+import { VisitorNotFoundError, VisitorTokenInvalidError } from './visitors.errors';
 import { AccessLogRepository } from './visitors.repository';
 import { CreateVisitorDto, UpdateVisitorDto, ValidateTokenDto } from './dto/visitor.dto';
 

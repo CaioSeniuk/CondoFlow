@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -25,6 +26,7 @@ import {
   CreateTicketDto,
   UpdateTicketDto,
 } from './dto/ticket.dto';
+import { InvalidStatusTransitionError } from './tickets.errors';
 import { ScopedResourceController } from '../common/scoped-resource.controller';
 
 @ApiTags('tickets')
@@ -95,12 +97,19 @@ export class TicketsController extends ScopedResourceController<Ticket>({
     summary: "Change a ticket's status",
     description: 'Manager only. Appends an entry to the ticket status history.',
   })
-  changeStatus(
+  async changeStatus(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: ChangeStatusDto,
     @Req() req: { user: AuthenticatedUser },
   ) {
-    return this.service.changeStatus(BigInt(id), dto.status, dto.note, req.user);
+    try {
+      return await this.service.changeStatus(BigInt(id), dto.status, dto.note, req.user);
+    } catch (err) {
+      if (err instanceof InvalidStatusTransitionError) {
+        throw new BadRequestException(err.message);
+      }
+      throw err;
+    }
   }
 
   @Post(':id/assign_provider')

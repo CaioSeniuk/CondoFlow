@@ -5,9 +5,12 @@ import { assertVisible } from '../common/access';
 import { AuthenticatedUser } from '../auth/authenticated-user.interface';
 import { StatusHistoryRepository, TicketsRepository } from './tickets.repository';
 import { CreateTicketDto } from './dto/ticket.dto';
+import { buildStatusTransitionChain } from './status-transition.chain';
 
 @Injectable()
 export class TicketsService {
+  private readonly statusTransitionChain = buildStatusTransitionChain();
+
   constructor(
     private repo: TicketsRepository,
     private statusHistoryRepo: StatusHistoryRepository,
@@ -57,6 +60,9 @@ export class TicketsService {
   }
 
   async changeStatus(id: bigint, status: TicketStatus, note: string, actor: AuthenticatedUser) {
+    const ticket = assertVisible(await this.repo.findById(id));
+    this.statusTransitionChain.handle({ ticket, nextStatus: status });
+
     await this.repo.update(id, { status, ...auditOnUpdate(actor) });
     await this.statusHistoryRepo.create(id, status, actor.id, note);
     return this.repo.findById(id);
