@@ -11,6 +11,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ExpenseCategory } from '@prisma/client';
 import { ManagerOrReadOnlyGuard } from '../auth/manager-or-read-only.guard';
 import { assertVisible } from '../common/access';
 import { AuthenticatedUser } from '../auth/authenticated-user.interface';
@@ -21,26 +22,22 @@ import {
   UpdateCategoryDto,
   UpdateExpenseDto,
 } from './dto/finance.dto';
+import { ScopedResourceController } from '../common/scoped-resource.controller';
 
 @ApiTags('finance')
 @UseGuards(ManagerOrReadOnlyGuard)
 @Controller('api/v1/finance/categories')
-export class ExpenseCategoriesController {
-  constructor(private service: ExpenseCategoriesService) {}
+export class ExpenseCategoriesController extends ScopedResourceController<ExpenseCategory>({
+  listSummary: 'List expense categories',
+  listDescription: 'Visible to residents and managers. Doormen and providers see no results.',
+  retrieveSummary: 'Retrieve an expense category',
+  retrieveDescription: 'Visible to residents and managers. Doormen and providers see no results.',
+}) {
+  service: ExpenseCategoriesService;
 
-  @Get()
-  @ApiOperation({
-    summary: 'List expense categories',
-    description: 'Visible to residents and managers. Doormen and providers see no results.',
-  })
-  list(@Req() req: { user: AuthenticatedUser }) {
-    return this.service.listForUser(req.user);
-  }
-
-  @Get(':id')
-  @ApiOperation({ summary: 'Retrieve an expense category' })
-  async retrieve(@Param('id', ParseIntPipe) id: number, @Req() req: { user: AuthenticatedUser }) {
-    return assertVisible(await this.service.findByIdForUser(BigInt(id), req.user));
+  constructor(service: ExpenseCategoriesService) {
+    super();
+    this.service = service;
   }
 
   @Post()
