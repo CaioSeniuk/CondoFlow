@@ -58,6 +58,7 @@ jobs:
 
       - run: npx prisma@5.22.0 validate
         env:
+          DIRECT_URL: ${{ env.TEST_DATABASE_URL }}
           DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
 
       - run: npm run lint:check
@@ -69,6 +70,7 @@ jobs:
         run: npx prisma@5.22.0 db push --skip-generate
         env:
           DATABASE_URL: ${{ env.TEST_DATABASE_URL }}
+          DIRECT_URL: ${{ env.TEST_DATABASE_URL }}
 
       - run: npm run test -- --runInBand
 
