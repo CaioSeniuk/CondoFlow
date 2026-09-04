@@ -3,9 +3,15 @@ import * as bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
 const BCRYPT_ROUNDS = 12;
-const SEED_PASSWORD = 'condoflow123';
+const SEED_PASSWORD = process.env.SEED_PASSWORD;
 
 async function main() {
+  if (!SEED_PASSWORD) {
+    throw new Error(
+      'Defina a variável de ambiente SEED_PASSWORD antes de rodar o seed (ex.: SEED_PASSWORD=suaSenha npm run prisma:seed).',
+    );
+  }
+
   const password = await bcrypt.hash(SEED_PASSWORD, BCRYPT_ROUNDS);
 
   const sindico = await prisma.user.upsert({
@@ -82,7 +88,7 @@ async function main() {
     },
   });
 
-  console.log('Seed concluída. Usuários criados (senha para todos: "condoflow123"):');
+  console.log('Seed concluída. Usuários criados (senha para todos: valor de SEED_PASSWORD):');
   console.log('  sindico / morador / porteiro / prestador');
 }
 
