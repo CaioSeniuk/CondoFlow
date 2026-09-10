@@ -107,7 +107,8 @@ npm run start:dev
 | `JWT_REFRESH_SECRET` | Segredo usado para assinar o refresh token |
 | `JWT_ACCESS_EXPIRES_IN` | Validade do access token (padrão `1h`) |
 | `JWT_REFRESH_EXPIRES_IN` | Validade do refresh token (padrão `7d`) |
-| `DATABASE_URL` | Connection string do banco de dados (Supabase). Obrigatória — o backend não sobe sem ela |
+| `DATABASE_URL` | Connection string do pooler Supabase (transaction-mode/pgbouncer, porta `6543`). Obrigatória — o backend não sobe sem ela |
+| `DIRECT_URL` | Connection string direta ao Postgres (session-mode, porta `5432`), usada por `prisma db pull`/`migrate` (pgbouncer não suporta essas operações) |
 | `SUPABASE_S3_ACCESS_KEY_ID` | Access key da conexão S3 do Supabase Storage |
 | `SUPABASE_S3_SECRET_ACCESS_KEY` | Secret key da conexão S3 do Supabase Storage |
 | `SUPABASE_S3_BUCKET_NAME` | Nome do bucket onde ficam fotos e documentos |
