@@ -123,6 +123,12 @@ export class ExpensesController {
 
   @Patch(':id')
   @ApiOperation({ summary: 'Partially update an expense', description: 'Manager only.' })
+  @ApiBody({
+    type: UpdateExpenseDto,
+    examples: {
+      default: { summary: 'Exemplo de atualização', value: { actualAmount: 4950.75 } },
+    },
+  })
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateExpenseDto,
