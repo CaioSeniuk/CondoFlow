@@ -72,6 +72,12 @@ export class PackagesController extends ScopedResourceController<Package>({
   @Patch(':id')
   @Roles(UserRole.doorman)
   @ApiOperation({ summary: 'Partially update a package', description: 'Doorman only.' })
+  @ApiBody({
+    type: UpdatePackageDto,
+    examples: {
+      default: { summary: 'Exemplo de atualização', value: { description: 'Caixa danificada' } },
+    },
+  })
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdatePackageDto,
