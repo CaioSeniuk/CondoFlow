@@ -87,6 +87,12 @@ export class UsersController {
   @Patch(':id')
   @Roles(UserRole.manager)
   @ApiOperation({ summary: 'Partially update a user', description: 'Manager only.' })
+  @ApiBody({
+    type: UpdateUserDto,
+    examples: {
+      default: { summary: 'Exemplo de atualização', value: { phone: '(41) 98888-1111' } },
+    },
+  })
   async update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateUserDto) {
     const user = await this.usersService.update(BigInt(id), dto);
     return excludePassword(user);
