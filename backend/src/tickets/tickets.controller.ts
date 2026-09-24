@@ -116,6 +116,15 @@ export class TicketsController extends ScopedResourceController<Ticket>({
     summary: "Change a ticket's status",
     description: 'Manager only. Appends an entry to the ticket status history.',
   })
+  @ApiBody({
+    type: ChangeStatusDto,
+    examples: {
+      default: {
+        summary: 'Exemplo de mudança de status',
+        value: { status: 'in_progress', note: 'Equipe a caminho do local.' },
+      },
+    },
+  })
   async changeStatus(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: ChangeStatusDto,
