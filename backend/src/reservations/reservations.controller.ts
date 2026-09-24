@@ -11,7 +11,7 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiTags, ApiBody } from '@nestjs/swagger';
 import { Reservation, UserRole } from '@prisma/client';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
@@ -48,6 +48,15 @@ export class CommonAreasController {
 
   @Post()
   @ApiOperation({ summary: 'Create a common area', description: 'Manager only.' })
+  @ApiBody({
+    type: CreateCommonAreaDto,
+    examples: {
+      default: {
+        summary: 'Exemplo de área comum',
+        value: { name: 'Salão de festas', description: 'Capacidade para 60 pessoas' },
+      },
+    },
+  })
   create(@Body() dto: CreateCommonAreaDto, @Req() req: { user: AuthenticatedUser }) {
     return this.service.create(dto, req.user);
   }
