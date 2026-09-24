@@ -185,6 +185,16 @@ export class ProvidersController extends ScopedResourceController<Provider>({
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(FileInterceptor('document'))
   @ApiOperation({ summary: 'Partially update a provider', description: 'Manager only.' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        name: { type: 'string', example: 'Encanador Silva Ltda' },
+        contact: { type: 'string', example: '(41) 98888-1111' },
+        document: { type: 'string', format: 'binary' },
+      },
+    },
+  })
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateProviderDto,
