@@ -33,6 +33,17 @@ export class AuthController {
     summary: 'Rotate a refresh token into a new token pair',
     description: 'Public endpoint.',
   })
+  @ApiBody({
+    type: TokenRefreshDto,
+    examples: {
+      default: {
+        summary: 'Exemplo de renovação de token',
+        value: {
+          refresh: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.refresh-token-example',
+        },
+      },
+    },
+  })
   refresh(@Body() dto: TokenRefreshDto) {
     return this.authService.refresh(dto.refresh);
   }
