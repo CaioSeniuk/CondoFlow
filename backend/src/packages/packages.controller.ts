@@ -12,7 +12,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiConsumes, ApiOperation, ApiTags, ApiBody } from '@nestjs/swagger';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
 import { Package, UserRole } from '@prisma/client';
@@ -48,6 +48,18 @@ export class PackagesController extends ScopedResourceController<Package>({
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(FileInterceptor('photo'))
   @ApiOperation({ summary: 'Register a package', description: 'Doorman only.' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        block: { type: 'string', example: 'A' },
+        apartment: { type: 'string', example: '101' },
+        description: { type: 'string', example: 'Caixa da Amazon' },
+        photo: { type: 'string', format: 'binary' },
+      },
+      required: ['block', 'apartment'],
+    },
+  })
   async create(
     @Body() dto: CreatePackageDto,
     @UploadedFile() photo: Express.Multer.File,
