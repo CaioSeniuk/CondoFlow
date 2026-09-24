@@ -108,6 +108,19 @@ export class ReservationsController extends ScopedResourceController<Reservation
     description:
       'Resident only. The backend rejects any reservation that overlaps an existing confirmed reservation for the same common area.',
   })
+  @ApiBody({
+    type: CreateReservationDto,
+    examples: {
+      default: {
+        summary: 'Exemplo de reserva',
+        value: {
+          commonArea: 1,
+          startTime: '2025-11-10T18:00:00.000Z',
+          endTime: '2025-11-10T22:00:00.000Z',
+        },
+      },
+    },
+  })
   create(@Body() dto: CreateReservationDto, @Req() req: { user: AuthenticatedUser }) {
     return this.service.create(dto, req.user);
   }
