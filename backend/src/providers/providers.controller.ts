@@ -13,7 +13,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileFieldsInterceptor, FileInterceptor } from '@nestjs/platform-express';
-import { ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiConsumes, ApiOperation, ApiTags, ApiBody } from '@nestjs/swagger';
 import { Evidence, Provider, UserRole } from '@prisma/client';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
@@ -66,6 +66,18 @@ export class EvidenceController extends ScopedResourceController<Evidence>({
   @ApiOperation({
     summary: 'Attach evidence to a ticket',
     description: 'Provider only. Before/after photos of the service performed.',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        ticket: { type: 'integer', example: 1 },
+        notes: { type: 'string', example: 'Vazamento reparado, torneira trocada.' },
+        beforePhoto: { type: 'string', format: 'binary' },
+        afterPhoto: { type: 'string', format: 'binary' },
+      },
+      required: ['ticket'],
+    },
   })
   async create(
     @Body() dto: CreateEvidenceDto,
