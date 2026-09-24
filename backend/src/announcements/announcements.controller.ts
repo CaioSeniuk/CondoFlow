@@ -10,7 +10,7 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ManagerOrReadOnlyGuard } from '../auth/manager-or-read-only.guard';
 import { assertVisible } from '../common/access';
 import { AuthenticatedUser } from '../auth/authenticated-user.interface';
@@ -51,6 +51,22 @@ export class AnnouncementsController {
   @Post()
   @UseGuards(ManagerOrReadOnlyGuard)
   @ApiOperation({ summary: 'Create an announcement', description: 'Manager only.' })
+  @ApiBody({
+    type: CreateAnnouncementDto,
+    examples: {
+      default: {
+        summary: 'Exemplo de comunicado',
+        value: {
+          title: 'Manutenção do elevador',
+          message: 'O elevador social ficará indisponível para manutenção na quinta-feira.',
+          segment: 'all',
+          block: '',
+          apartment: '',
+          urgent: false,
+        },
+      },
+    },
+  })
   async create(@Body() dto: CreateAnnouncementDto, @Req() req: { user: AuthenticatedUser }) {
     const announcement = await this.service.create(dto, req.user);
     return this.serialize(announcement, req.user);
