@@ -75,6 +75,15 @@ export class AnnouncementsController {
   @Patch(':id')
   @UseGuards(ManagerOrReadOnlyGuard)
   @ApiOperation({ summary: 'Partially update an announcement', description: 'Manager only.' })
+  @ApiBody({
+    type: UpdateAnnouncementDto,
+    examples: {
+      default: {
+        summary: 'Exemplo de atualização parcial',
+        value: { title: 'Manutenção do elevador (atualizado)', urgent: true },
+      },
+    },
+  })
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateAnnouncementDto,
