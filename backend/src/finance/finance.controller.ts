@@ -102,6 +102,21 @@ export class ExpensesController {
 
   @Post()
   @ApiOperation({ summary: 'Register an expense', description: 'Manager only.' })
+  @ApiBody({
+    type: CreateExpenseDto,
+    examples: {
+      default: {
+        summary: 'Exemplo de despesa',
+        value: {
+          category: 1,
+          description: 'Reforma do playground',
+          referenceMonth: '2025-10-01',
+          budgetedAmount: 5000,
+          actualAmount: 4800.5,
+        },
+      },
+    },
+  })
   async create(@Body() dto: CreateExpenseDto, @Req() req: { user: AuthenticatedUser }) {
     return this.service.serialize(await this.service.create(dto, req.user));
   }
