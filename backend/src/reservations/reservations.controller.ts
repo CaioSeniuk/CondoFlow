@@ -63,6 +63,12 @@ export class CommonAreasController {
 
   @Patch(':id')
   @ApiOperation({ summary: 'Partially update a common area', description: 'Manager only.' })
+  @ApiBody({
+    type: UpdateCommonAreaDto,
+    examples: {
+      default: { summary: 'Exemplo de atualização', value: { description: 'Capacidade para 80 pessoas' } },
+    },
+  })
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateCommonAreaDto,
