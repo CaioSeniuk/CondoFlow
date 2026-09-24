@@ -54,6 +54,12 @@ export class ExpenseCategoriesController extends ScopedResourceController<Expens
 
   @Patch(':id')
   @ApiOperation({ summary: 'Partially update an expense category', description: 'Manager only.' })
+  @ApiBody({
+    type: UpdateCategoryDto,
+    examples: {
+      default: { summary: 'Exemplo de atualização', value: { name: 'Manutenção predial' } },
+    },
+  })
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateCategoryDto,
