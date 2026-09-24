@@ -1,0 +1,59 @@
+.page {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
+.brandPanel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 64px;
+  background: linear-gradient(160deg, #2f6fed 0%, #1c3f99 100%);
+  color: #fff;
+}
+
+.brandContent {
+  max-width: 420px;
+}
+
+.brandMark {
+  display: inline-block;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  margin-bottom: 40px;
+}
+
+.brandHeadline {
+  font-size: 34px;
+  line-height: 1.25;
+  font-weight: 700;
+  margin: 0 0 16px;
+}
+
+.brandText {
+  font-size: 15px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.85);
+  margin: 0;
+}
+
+.formPanel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+  background: var(--color-bg);
+}
+
+/* Abaixo do breakpoint, cai para o layout mobile: só o card, sem o painel de marca. */
+@media (max-width: 900px) {
+  .page {
+    grid-template-columns: 1fr;
+  }
+
+  .brandPanel {
+    display: none;
+  }
+}
