@@ -101,6 +101,12 @@ export class PollsController {
     summary: 'Vote on a poll',
     description: 'Resident only. Each resident may vote once per poll.',
   })
+  @ApiBody({
+    type: VoteDto,
+    examples: {
+      default: { summary: 'Exemplo de voto', value: { option: 1 } },
+    },
+  })
   async vote(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: VoteDto,
