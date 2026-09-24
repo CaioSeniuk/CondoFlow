@@ -10,7 +10,7 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiTags, ApiBody } from '@nestjs/swagger';
 import { ExpenseCategory } from '@prisma/client';
 import { ManagerOrReadOnlyGuard } from '../auth/manager-or-read-only.guard';
 import { assertVisible } from '../common/access';
@@ -42,6 +42,12 @@ export class ExpenseCategoriesController extends ScopedResourceController<Expens
 
   @Post()
   @ApiOperation({ summary: 'Create an expense category', description: 'Manager only.' })
+  @ApiBody({
+    type: CreateCategoryDto,
+    examples: {
+      default: { summary: 'Exemplo de categoria', value: { name: 'Manutenção' } },
+    },
+  })
   create(@Body() dto: CreateCategoryDto, @Req() req: { user: AuthenticatedUser }) {
     return this.service.create(dto, req.user);
   }
