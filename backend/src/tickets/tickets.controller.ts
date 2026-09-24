@@ -13,7 +13,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiConsumes, ApiOperation, ApiTags, ApiBody } from '@nestjs/swagger';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
 import { Ticket, UserRole } from '@prisma/client';
@@ -57,6 +57,19 @@ export class TicketsController extends ScopedResourceController<Ticket>({
   @ApiOperation({
     summary: 'Open a ticket',
     description: 'Resident only. Creates the initial status history entry.',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        category: { type: 'string', example: 'Elétrica' },
+        location: { type: 'string', example: 'Garagem - vaga 12' },
+        description: { type: 'string', example: 'Lâmpada queimada próxima à vaga.' },
+        urgency: { type: 'string', enum: ['low', 'medium', 'high'], example: 'medium' },
+        photo: { type: 'string', format: 'binary' },
+      },
+      required: ['category', 'location', 'description'],
+    },
   })
   async create(
     @Body() dto: CreateTicketDto,
