@@ -70,6 +70,15 @@ export class PollsController {
   @Patch(':id')
   @UseGuards(ManagerOrReadOnlyGuard)
   @ApiOperation({ summary: 'Partially update a poll', description: 'Manager only.' })
+  @ApiBody({
+    type: UpdatePollDto,
+    examples: {
+      default: {
+        summary: 'Exemplo de atualização',
+        value: { question: 'Devemos instalar câmeras extras na garagem? (revisado)' },
+      },
+    },
+  })
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdatePollDto,
