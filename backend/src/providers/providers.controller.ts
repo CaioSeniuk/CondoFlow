@@ -156,6 +156,19 @@ export class ProvidersController extends ScopedResourceController<Provider>({
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(FileInterceptor('document'))
   @ApiOperation({ summary: 'Register a provider', description: 'Manager only.' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        name: { type: 'string', example: 'Encanador Silva Ltda' },
+        contractNumber: { type: 'string', example: 'CT-2025-001' },
+        contact: { type: 'string', example: '(41) 99999-0000' },
+        user: { type: 'integer', example: 5 },
+        document: { type: 'string', format: 'binary' },
+      },
+      required: ['name'],
+    },
+  })
   async create(
     @Body() dto: CreateProviderDto,
     @UploadedFile() document: Express.Multer.File | undefined,
