@@ -100,6 +100,12 @@ export class PackagesController extends ScopedResourceController<Package>({
     description:
       'Doorman only. Records who picked up the package, the timestamp, and the doorman who released it, for traceability.',
   })
+  @ApiBody({
+    type: PickupPackageDto,
+    examples: {
+      default: { summary: 'Exemplo de retirada', value: { pickedUpBy: 'Maria Souza' } },
+    },
+  })
   pickup(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: PickupPackageDto,
