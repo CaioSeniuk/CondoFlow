@@ -132,6 +132,15 @@ export class ReservationsController extends ScopedResourceController<Reservation
     description:
       'Residents can only update their own reservations. Overlap validation runs again on every update.',
   })
+  @ApiBody({
+    type: UpdateReservationDto,
+    examples: {
+      default: {
+        summary: 'Exemplo de atualização',
+        value: { endTime: '2025-11-10T23:00:00.000Z' },
+      },
+    },
+  })
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateReservationDto,
