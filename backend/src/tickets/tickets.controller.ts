@@ -147,6 +147,12 @@ export class TicketsController extends ScopedResourceController<Ticket>({
     description:
       "Manager only. Sets the ticket's status to 'provider_assigned' and appends an entry to the status history.",
   })
+  @ApiBody({
+    type: AssignProviderDto,
+    examples: {
+      default: { summary: 'Exemplo de atribuição', value: { provider: 3 } },
+    },
+  })
   assignProvider(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: AssignProviderDto,
