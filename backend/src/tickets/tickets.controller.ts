@@ -86,6 +86,12 @@ export class TicketsController extends ScopedResourceController<Ticket>({
     summary: 'Partially update a ticket',
     description: 'Residents can only update their own tickets. Managers can update any ticket.',
   })
+  @ApiBody({
+    type: UpdateTicketDto,
+    examples: {
+      default: { summary: 'Exemplo de atualização', value: { urgency: 'high' } },
+    },
+  })
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateTicketDto,
