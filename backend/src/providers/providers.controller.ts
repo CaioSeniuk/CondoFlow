@@ -92,6 +92,16 @@ export class EvidenceController extends ScopedResourceController<Evidence>({
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(evidenceUpload)
   @ApiOperation({ summary: 'Partially update a piece of evidence', description: 'Provider only.' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        notes: { type: 'string', example: 'Peça trocada e testada.' },
+        beforePhoto: { type: 'string', format: 'binary' },
+        afterPhoto: { type: 'string', format: 'binary' },
+      },
+    },
+  })
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateEvidenceDto,
