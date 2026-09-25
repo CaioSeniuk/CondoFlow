@@ -14,7 +14,7 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiTags, ApiBody } from '@nestjs/swagger';
 import { Roles } from '../auth/roles.decorator';
 import { assertVisible } from '../common/access';
 import { RolesGuard } from '../auth/roles.guard';
@@ -67,6 +67,22 @@ export class VisitorsController {
     description:
       'Resident only. Generates a QR Code token valid only between valid_from and valid_until.',
   })
+  @ApiBody({
+    type: CreateVisitorDto,
+    examples: {
+      default: {
+        summary: 'Exemplo de visitante',
+        value: {
+          name: 'Carlos Pereira',
+          document: '123.456.789-00',
+          block: 'A',
+          apartment: '101',
+          validFrom: '2025-11-10T08:00:00.000Z',
+          validUntil: '2025-11-10T20:00:00.000Z',
+        },
+      },
+    },
+  })
   async create(@Body() dto: CreateVisitorDto, @Req() req: { user: AuthenticatedUser }) {
     const visitor = await this.service.create(dto, req.user);
     return serialize(visitor, this.service);
@@ -77,6 +93,15 @@ export class VisitorsController {
   @ApiOperation({
     summary: 'Partially update a visitor',
     description: 'Resident only, and only for their own block/apartment.',
+  })
+  @ApiBody({
+    type: UpdateVisitorDto,
+    examples: {
+      default: {
+        summary: 'Exemplo de atualização',
+        value: { validUntil: '2025-11-10T22:00:00.000Z' },
+      },
+    },
   })
   async update(
     @Param('id', ParseIntPipe) id: number,
@@ -104,6 +129,15 @@ export class VisitorsController {
     summary: "Validate a visitor's QR Code",
     description:
       "Doorman only. Checks the QR Code token's validity window and registers an entry/exit access log entry.",
+  })
+  @ApiBody({
+    type: ValidateTokenDto,
+    examples: {
+      default: {
+        summary: 'Exemplo de validação',
+        value: { token: '3fa85f64-5717-4562-b3fc-2c963f66afa6', direction: 'in' },
+      },
+    },
   })
   async validateToken(@Body() dto: ValidateTokenDto, @Req() req: { user: AuthenticatedUser }) {
     try {

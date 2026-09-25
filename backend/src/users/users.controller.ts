@@ -11,7 +11,7 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiTags, ApiBody } from '@nestjs/swagger';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
 import { Public } from '../auth/public.decorator';
@@ -60,6 +60,25 @@ export class UsersController {
     summary: 'Register a user',
     description: 'Public endpoint. Creates the account with the given role and hashed password.',
   })
+  @ApiBody({
+    type: RegisterDto,
+    examples: {
+      default: {
+        summary: 'Exemplo de cadastro',
+        value: {
+          username: 'joao.silva',
+          password: 'SenhaForte123',
+          firstName: 'João',
+          lastName: 'Silva',
+          email: 'joao.silva@example.com',
+          role: 'resident',
+          block: 'A',
+          apartment: '101',
+          phone: '(41) 99999-0000',
+        },
+      },
+    },
+  })
   async create(@Body() dto: RegisterDto) {
     const user = await this.usersService.register(dto);
     return excludePassword(user);
@@ -68,6 +87,12 @@ export class UsersController {
   @Patch(':id')
   @Roles(UserRole.manager)
   @ApiOperation({ summary: 'Partially update a user', description: 'Manager only.' })
+  @ApiBody({
+    type: UpdateUserDto,
+    examples: {
+      default: { summary: 'Exemplo de atualização', value: { phone: '(41) 98888-1111' } },
+    },
+  })
   async update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateUserDto) {
     const user = await this.usersService.update(BigInt(id), dto);
     return excludePassword(user);

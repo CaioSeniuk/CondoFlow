@@ -11,7 +11,7 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiTags, ApiBody } from '@nestjs/swagger';
 import { Reservation, UserRole } from '@prisma/client';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
@@ -48,12 +48,27 @@ export class CommonAreasController {
 
   @Post()
   @ApiOperation({ summary: 'Create a common area', description: 'Manager only.' })
+  @ApiBody({
+    type: CreateCommonAreaDto,
+    examples: {
+      default: {
+        summary: 'Exemplo de área comum',
+        value: { name: 'Salão de festas', description: 'Capacidade para 60 pessoas' },
+      },
+    },
+  })
   create(@Body() dto: CreateCommonAreaDto, @Req() req: { user: AuthenticatedUser }) {
     return this.service.create(dto, req.user);
   }
 
   @Patch(':id')
   @ApiOperation({ summary: 'Partially update a common area', description: 'Manager only.' })
+  @ApiBody({
+    type: UpdateCommonAreaDto,
+    examples: {
+      default: { summary: 'Exemplo de atualização', value: { description: 'Capacidade para 80 pessoas' } },
+    },
+  })
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateCommonAreaDto,
@@ -93,6 +108,19 @@ export class ReservationsController extends ScopedResourceController<Reservation
     description:
       'Resident only. The backend rejects any reservation that overlaps an existing confirmed reservation for the same common area.',
   })
+  @ApiBody({
+    type: CreateReservationDto,
+    examples: {
+      default: {
+        summary: 'Exemplo de reserva',
+        value: {
+          commonArea: 1,
+          startTime: '2025-11-10T18:00:00.000Z',
+          endTime: '2025-11-10T22:00:00.000Z',
+        },
+      },
+    },
+  })
   create(@Body() dto: CreateReservationDto, @Req() req: { user: AuthenticatedUser }) {
     return this.service.create(dto, req.user);
   }
@@ -103,6 +131,15 @@ export class ReservationsController extends ScopedResourceController<Reservation
     summary: 'Partially update a reservation',
     description:
       'Residents can only update their own reservations. Overlap validation runs again on every update.',
+  })
+  @ApiBody({
+    type: UpdateReservationDto,
+    examples: {
+      default: {
+        summary: 'Exemplo de atualização',
+        value: { endTime: '2025-11-10T23:00:00.000Z' },
+      },
+    },
   })
   update(
     @Param('id', ParseIntPipe) id: number,

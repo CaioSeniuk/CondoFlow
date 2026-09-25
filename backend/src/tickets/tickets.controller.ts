@@ -13,7 +13,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiConsumes, ApiOperation, ApiTags, ApiBody } from '@nestjs/swagger';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
 import { Ticket, UserRole } from '@prisma/client';
@@ -58,6 +58,19 @@ export class TicketsController extends ScopedResourceController<Ticket>({
     summary: 'Open a ticket',
     description: 'Resident only. Creates the initial status history entry.',
   })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        category: { type: 'string', example: 'Elétrica' },
+        location: { type: 'string', example: 'Garagem - vaga 12' },
+        description: { type: 'string', example: 'Lâmpada queimada próxima à vaga.' },
+        urgency: { type: 'string', enum: ['low', 'medium', 'high'], example: 'medium' },
+        photo: { type: 'string', format: 'binary' },
+      },
+      required: ['category', 'location', 'description'],
+    },
+  })
   async create(
     @Body() dto: CreateTicketDto,
     @UploadedFile() photo: Express.Multer.File | undefined,
@@ -72,6 +85,12 @@ export class TicketsController extends ScopedResourceController<Ticket>({
   @ApiOperation({
     summary: 'Partially update a ticket',
     description: 'Residents can only update their own tickets. Managers can update any ticket.',
+  })
+  @ApiBody({
+    type: UpdateTicketDto,
+    examples: {
+      default: { summary: 'Exemplo de atualização', value: { urgency: 'high' } },
+    },
   })
   update(
     @Param('id', ParseIntPipe) id: number,
@@ -97,6 +116,15 @@ export class TicketsController extends ScopedResourceController<Ticket>({
     summary: "Change a ticket's status",
     description: 'Manager only. Appends an entry to the ticket status history.',
   })
+  @ApiBody({
+    type: ChangeStatusDto,
+    examples: {
+      default: {
+        summary: 'Exemplo de mudança de status',
+        value: { status: 'in_progress', note: 'Equipe a caminho do local.' },
+      },
+    },
+  })
   async changeStatus(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: ChangeStatusDto,
@@ -118,6 +146,12 @@ export class TicketsController extends ScopedResourceController<Ticket>({
     summary: 'Assign a provider to a ticket',
     description:
       "Manager only. Sets the ticket's status to 'provider_assigned' and appends an entry to the status history.",
+  })
+  @ApiBody({
+    type: AssignProviderDto,
+    examples: {
+      default: { summary: 'Exemplo de atribuição', value: { provider: 3 } },
+    },
   })
   assignProvider(
     @Param('id', ParseIntPipe) id: number,

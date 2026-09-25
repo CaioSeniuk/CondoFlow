@@ -1,5 +1,5 @@
 import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { TokenObtainDto, TokenRefreshDto } from './dto/token.dto';
 import { Public } from './public.decorator';
@@ -13,6 +13,15 @@ export class AuthController {
   @Post()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Obtain an access/refresh token pair', description: 'Public endpoint.' })
+  @ApiBody({
+    type: TokenObtainDto,
+    examples: {
+      default: {
+        summary: 'Exemplo de login',
+        value: { username: 'joao.silva', password: 'SenhaForte123' },
+      },
+    },
+  })
   obtain(@Body() dto: TokenObtainDto) {
     return this.authService.login(dto.username, dto.password);
   }
@@ -23,6 +32,17 @@ export class AuthController {
   @ApiOperation({
     summary: 'Rotate a refresh token into a new token pair',
     description: 'Public endpoint.',
+  })
+  @ApiBody({
+    type: TokenRefreshDto,
+    examples: {
+      default: {
+        summary: 'Exemplo de renovação de token',
+        value: {
+          refresh: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.refresh-token-example',
+        },
+      },
+    },
   })
   refresh(@Body() dto: TokenRefreshDto) {
     return this.authService.refresh(dto.refresh);

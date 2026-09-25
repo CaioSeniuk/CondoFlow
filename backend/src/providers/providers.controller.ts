@@ -13,7 +13,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileFieldsInterceptor, FileInterceptor } from '@nestjs/platform-express';
-import { ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiConsumes, ApiOperation, ApiTags, ApiBody } from '@nestjs/swagger';
 import { Evidence, Provider, UserRole } from '@prisma/client';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
@@ -67,6 +67,18 @@ export class EvidenceController extends ScopedResourceController<Evidence>({
     summary: 'Attach evidence to a ticket',
     description: 'Provider only. Before/after photos of the service performed.',
   })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        ticket: { type: 'integer', example: 1 },
+        notes: { type: 'string', example: 'Vazamento reparado, torneira trocada.' },
+        beforePhoto: { type: 'string', format: 'binary' },
+        afterPhoto: { type: 'string', format: 'binary' },
+      },
+      required: ['ticket'],
+    },
+  })
   async create(
     @Body() dto: CreateEvidenceDto,
     @UploadedFiles() files: EvidenceFiles,
@@ -80,6 +92,16 @@ export class EvidenceController extends ScopedResourceController<Evidence>({
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(evidenceUpload)
   @ApiOperation({ summary: 'Partially update a piece of evidence', description: 'Provider only.' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        notes: { type: 'string', example: 'Peça trocada e testada.' },
+        beforePhoto: { type: 'string', format: 'binary' },
+        afterPhoto: { type: 'string', format: 'binary' },
+      },
+    },
+  })
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateEvidenceDto,
@@ -134,6 +156,19 @@ export class ProvidersController extends ScopedResourceController<Provider>({
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(FileInterceptor('document'))
   @ApiOperation({ summary: 'Register a provider', description: 'Manager only.' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        name: { type: 'string', example: 'Encanador Silva Ltda' },
+        contractNumber: { type: 'string', example: 'CT-2025-001' },
+        contact: { type: 'string', example: '(41) 99999-0000' },
+        user: { type: 'integer', example: 5 },
+        document: { type: 'string', format: 'binary' },
+      },
+      required: ['name'],
+    },
+  })
   async create(
     @Body() dto: CreateProviderDto,
     @UploadedFile() document: Express.Multer.File | undefined,
@@ -150,6 +185,16 @@ export class ProvidersController extends ScopedResourceController<Provider>({
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(FileInterceptor('document'))
   @ApiOperation({ summary: 'Partially update a provider', description: 'Manager only.' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        name: { type: 'string', example: 'Encanador Silva Ltda' },
+        contact: { type: 'string', example: '(41) 98888-1111' },
+        document: { type: 'string', format: 'binary' },
+      },
+    },
+  })
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateProviderDto,

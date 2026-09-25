@@ -10,7 +10,7 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiTags, ApiBody } from '@nestjs/swagger';
 import { ExpenseCategory } from '@prisma/client';
 import { ManagerOrReadOnlyGuard } from '../auth/manager-or-read-only.guard';
 import { assertVisible } from '../common/access';
@@ -42,12 +42,24 @@ export class ExpenseCategoriesController extends ScopedResourceController<Expens
 
   @Post()
   @ApiOperation({ summary: 'Create an expense category', description: 'Manager only.' })
+  @ApiBody({
+    type: CreateCategoryDto,
+    examples: {
+      default: { summary: 'Exemplo de categoria', value: { name: 'Manutenção' } },
+    },
+  })
   create(@Body() dto: CreateCategoryDto, @Req() req: { user: AuthenticatedUser }) {
     return this.service.create(dto, req.user);
   }
 
   @Patch(':id')
   @ApiOperation({ summary: 'Partially update an expense category', description: 'Manager only.' })
+  @ApiBody({
+    type: UpdateCategoryDto,
+    examples: {
+      default: { summary: 'Exemplo de atualização', value: { name: 'Manutenção predial' } },
+    },
+  })
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateCategoryDto,
@@ -90,12 +102,33 @@ export class ExpensesController {
 
   @Post()
   @ApiOperation({ summary: 'Register an expense', description: 'Manager only.' })
+  @ApiBody({
+    type: CreateExpenseDto,
+    examples: {
+      default: {
+        summary: 'Exemplo de despesa',
+        value: {
+          category: 1,
+          description: 'Reforma do playground',
+          referenceMonth: '2025-10-01',
+          budgetedAmount: 5000,
+          actualAmount: 4800.5,
+        },
+      },
+    },
+  })
   async create(@Body() dto: CreateExpenseDto, @Req() req: { user: AuthenticatedUser }) {
     return this.service.serialize(await this.service.create(dto, req.user));
   }
 
   @Patch(':id')
   @ApiOperation({ summary: 'Partially update an expense', description: 'Manager only.' })
+  @ApiBody({
+    type: UpdateExpenseDto,
+    examples: {
+      default: { summary: 'Exemplo de atualização', value: { actualAmount: 4950.75 } },
+    },
+  })
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateExpenseDto,

@@ -10,7 +10,7 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiTags, ApiBody } from '@nestjs/swagger';
 import { UserRole } from '@prisma/client';
 import { Roles } from '../auth/roles.decorator';
 import { assertVisible } from '../common/access';
@@ -49,6 +49,19 @@ export class PollsController {
   @Post()
   @UseGuards(ManagerOrReadOnlyGuard)
   @ApiOperation({ summary: 'Create a poll', description: 'Manager only.' })
+  @ApiBody({
+    type: CreatePollDto,
+    examples: {
+      default: {
+        summary: 'Exemplo de enquete',
+        value: {
+          question: 'Devemos instalar câmeras extras na garagem?',
+          closesAt: '2025-12-01T23:59:59.000Z',
+          options: [{ text: 'Sim' }, { text: 'Não' }],
+        },
+      },
+    },
+  })
   async create(@Body() dto: CreatePollDto, @Req() req: { user: AuthenticatedUser }) {
     const poll = await this.service.create(dto, req.user);
     return this.service.serialize(poll, new Set());
@@ -57,6 +70,15 @@ export class PollsController {
   @Patch(':id')
   @UseGuards(ManagerOrReadOnlyGuard)
   @ApiOperation({ summary: 'Partially update a poll', description: 'Manager only.' })
+  @ApiBody({
+    type: UpdatePollDto,
+    examples: {
+      default: {
+        summary: 'Exemplo de atualização',
+        value: { question: 'Devemos instalar câmeras extras na garagem? (revisado)' },
+      },
+    },
+  })
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdatePollDto,
@@ -78,6 +100,12 @@ export class PollsController {
   @ApiOperation({
     summary: 'Vote on a poll',
     description: 'Resident only. Each resident may vote once per poll.',
+  })
+  @ApiBody({
+    type: VoteDto,
+    examples: {
+      default: { summary: 'Exemplo de voto', value: { option: 1 } },
+    },
   })
   async vote(
     @Param('id', ParseIntPipe) id: number,
