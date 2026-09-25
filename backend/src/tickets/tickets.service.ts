@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { TicketStatus, UserRole } from '@prisma/client';
 import { auditOnCreate, auditOnUpdate } from '../common/audit';
 import { assertVisible } from '../common/access';
@@ -6,15 +6,42 @@ import { AuthenticatedUser } from '../auth/authenticated-user.interface';
 import { StatusHistoryRepository, TicketsRepository } from './tickets.repository';
 import { CreateTicketDto } from './dto/ticket.dto';
 import { buildStatusTransitionChain } from './status-transition.chain';
+import {
+  ManagerTicketActionProcessor,
+  ProviderTicketActionProcessor,
+  ResidentTicketActionProcessor,
+  TicketActionPayload,
+  TicketActionTemplate,
+} from './processors';
 
 @Injectable()
 export class TicketsService {
   private readonly statusTransitionChain = buildStatusTransitionChain();
 
+  /**
+   * Um processor (Template Method) por perfil que pode atuar sobre um
+   * chamado já existente. `doorman` não participa do fluxo de chamados.
+   */
+  private readonly actionProcessors: Partial<Record<UserRole, TicketActionTemplate>>;
+
   constructor(
     private repo: TicketsRepository,
     private statusHistoryRepo: StatusHistoryRepository,
-  ) {}
+  ) {
+    this.actionProcessors = {
+      [UserRole.resident]: new ResidentTicketActionProcessor(repo, statusHistoryRepo),
+      [UserRole.manager]: new ManagerTicketActionProcessor(
+        repo,
+        statusHistoryRepo,
+        this.statusTransitionChain,
+      ),
+      [UserRole.provider]: new ProviderTicketActionProcessor(
+        repo,
+        statusHistoryRepo,
+        this.statusTransitionChain,
+      ),
+    };
+  }
 
   listForUser(user: AuthenticatedUser) {
     if (user.role === UserRole.resident) return this.repo.filterByResident(user.id);
@@ -81,5 +108,20 @@ export class TicketsService {
       'Provider assigned',
     );
     return this.repo.findById(id);
+  }
+
+  /**
+   * Rota genérica de ação sobre um chamado (Template Method): o esqueleto —
+   * carregar no escopo do perfil, delegar a regra de negócio específica,
+   * persistir e logar histórico — é o mesmo para resident/manager/provider;
+   * só a regra de cada etapa (editar enquanto aberto, validar/atribuir,
+   * executar) muda, isolada em cada `TicketActionTemplate` concreto.
+   */
+  performAction(id: bigint, actor: AuthenticatedUser, payload: TicketActionPayload) {
+    const processor = this.actionProcessors[actor.role];
+    if (!processor) {
+      throw new ForbiddenException('This role cannot act on tickets');
+    }
+    return processor.executeAction(id, actor, payload);
   }
 }
