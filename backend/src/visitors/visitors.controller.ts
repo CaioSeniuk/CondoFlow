@@ -94,6 +94,15 @@ export class VisitorsController {
     summary: 'Partially update a visitor',
     description: 'Resident only, and only for their own block/apartment.',
   })
+  @ApiBody({
+    type: UpdateVisitorDto,
+    examples: {
+      default: {
+        summary: 'Exemplo de atualização',
+        value: { validUntil: '2025-11-10T22:00:00.000Z' },
+      },
+    },
+  })
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateVisitorDto,
