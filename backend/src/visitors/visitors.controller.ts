@@ -130,6 +130,15 @@ export class VisitorsController {
     description:
       "Doorman only. Checks the QR Code token's validity window and registers an entry/exit access log entry.",
   })
+  @ApiBody({
+    type: ValidateTokenDto,
+    examples: {
+      default: {
+        summary: 'Exemplo de validação',
+        value: { token: '3fa85f64-5717-4562-b3fc-2c963f66afa6', direction: 'in' },
+      },
+    },
+  })
   async validateToken(@Body() dto: ValidateTokenDto, @Req() req: { user: AuthenticatedUser }) {
     try {
       const { visitor, accessLog } = await this.service.validateToken(
