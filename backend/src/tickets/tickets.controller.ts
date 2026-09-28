@@ -24,6 +24,7 @@ import {
   AssignProviderDto,
   ChangeStatusDto,
   CreateTicketDto,
+  TicketActionDto,
   UpdateTicketDto,
 } from './dto/ticket.dto';
 import { InvalidStatusTransitionError } from './tickets.errors';
@@ -159,5 +160,47 @@ export class TicketsController extends ScopedResourceController<Ticket>({
     @Req() req: { user: AuthenticatedUser },
   ) {
     return this.service.assignProvider(BigInt(id), dto.provider, req.user);
+  }
+
+  @Post(':id/actions')
+  @Roles(UserRole.resident, UserRole.manager, UserRole.provider)
+  @ApiOperation({
+    summary: 'Act on a ticket',
+    description:
+      'Design pattern: Template Method. Entry point shared by resident, manager and provider. ' +
+      'Every role runs the same load -> validate -> persist -> log skeleton; only the business ' +
+      'rule for that stage (edit while open, validate/assign a provider, execute the service) ' +
+      'changes, resolved by a role-specific processor (backend/src/tickets/processors).',
+  })
+  @ApiBody({
+    type: TicketActionDto,
+    examples: {
+      resident: {
+        summary: 'Exemplo (resident) — editar chamado aberto',
+        value: { description: 'Lâmpada queimada, cheiro de queimado também.' },
+      },
+      manager: {
+        summary: 'Exemplo (manager) — atribuir prestador',
+        value: { providerId: 3, note: 'Encaminhado ao eletricista.' },
+      },
+      provider: {
+        summary: 'Exemplo (provider) — avançar status',
+        value: { status: 'in_progress', note: 'Chegando ao local.' },
+      },
+    },
+  })
+  async performAction(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: TicketActionDto,
+    @Req() req: { user: AuthenticatedUser },
+  ) {
+    try {
+      return await this.service.performAction(BigInt(id), req.user, dto);
+    } catch (err) {
+      if (err instanceof InvalidStatusTransitionError) {
+        throw new BadRequestException(err.message);
+      }
+      throw err;
+    }
   }
 }

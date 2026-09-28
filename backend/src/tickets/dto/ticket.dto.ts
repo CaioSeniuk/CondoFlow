@@ -27,3 +27,20 @@ export const assignProviderSchema = z.object({
 });
 
 export class AssignProviderDto extends createZodDto(assignProviderSchema) {}
+
+/**
+ * Payload da rota genérica `POST /:id/actions` (Template Method). Todos os
+ * campos são opcionais porque cada perfil usa apenas o subconjunto relevante
+ * à sua etapa: resident (category/location/description), manager
+ * (providerId ou status) e provider (status).
+ */
+export const ticketActionSchema = z.object({
+  status: z.nativeEnum(TicketStatus).optional(),
+  note: z.string().max(250).optional(),
+  providerId: z.coerce.number().int().optional(),
+  category: z.string().min(1).max(100).optional(),
+  location: z.string().min(1).max(150).optional(),
+  description: z.string().min(1).optional(),
+});
+
+export class TicketActionDto extends createZodDto(ticketActionSchema) {}
