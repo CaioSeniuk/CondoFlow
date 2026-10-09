@@ -11,26 +11,22 @@ interface RoleSelectorProps {
 
 export function RoleSelector({ value, onChange, disabled }: RoleSelectorProps) {
   return (
-    <div>
-      <span className={styles.label}>Você é:</span>
-      <div className={styles.grid} role="radiogroup" aria-label="Selecione seu perfil">
+    <fieldset className={styles.fieldset} disabled={disabled}>
+      <legend className={styles.label}>Você é:</legend>
+      <div className={styles.grid}>
         {ROLE_OPTIONS.map((option) => {
           const selected = option.value === value;
           return (
-            <button
-              key={option.value}
-              type="button"
-              role="radio"
-              aria-checked={selected}
-              disabled={disabled}
-              className={selected ? `${styles.option} ${styles.optionSelected}` : styles.option}
-              onClick={() => onChange(option.value)}
-            >
-              {option.label}
-            </button>
+            <label key={option.value} className={styles.choice}>
+              <input type="radio" name="role" value={option.value} checked={selected}
+                onChange={() => onChange(option.value)} />
+              <span className={selected ? `${styles.option} ${styles.optionSelected}` : styles.option}>
+                {option.label}
+              </span>
+            </label>
           );
         })}
       </div>
-    </div>
+    </fieldset>
   );
 }

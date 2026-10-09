@@ -5,6 +5,7 @@ import { AccessLogRepository, VisitorsRepository } from './visitors.repository';
 import { AuthenticatedUser } from '../auth/authenticated-user.interface';
 
 const doorman: AuthenticatedUser = {
+  condominiumId: 1n,
   id: 2n,
   username: 'doorman1',
   role: UserRole.doorman,
@@ -14,6 +15,7 @@ const doorman: AuthenticatedUser = {
 
 function visitorValidFor(validFrom: Date, validUntil: Date): Visitor {
   return {
+    condominiumId: 1n,
     id: 10n,
     createdAt: new Date(),
     updatedAt: new Date(),

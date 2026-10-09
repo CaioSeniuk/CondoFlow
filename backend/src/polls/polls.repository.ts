@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { tenantCreate } from '../common/condominium-context';
 
 const includeOptions = {
   options: {
@@ -23,9 +24,12 @@ export class PollsRepository {
     return this.prisma.poll.findUnique({ where: { id }, include: includeOptions });
   }
 
-  create(data: Prisma.PollUncheckedCreateInput, options: { text: string }[]) {
+  create(
+    data: Omit<Prisma.PollUncheckedCreateInput, 'condominiumId'>,
+    options: { text: string }[],
+  ) {
     return this.prisma.poll.create({
-      data: { ...data, options: { create: options } },
+      data: { ...tenantCreate(data), options: { create: options } },
       include: includeOptions,
     });
   }

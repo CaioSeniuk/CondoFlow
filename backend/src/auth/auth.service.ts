@@ -4,6 +4,7 @@ import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
 import { PasswordService } from './password.service';
 import { TokenPairResponse } from './dto/token.dto';
+import { systemScope } from '../common/condominium-context';
 
 @Injectable()
 export class AuthService {
@@ -15,7 +16,7 @@ export class AuthService {
   ) {}
 
   async login(username: string, password: string): Promise<TokenPairResponse> {
-    const user = await this.prisma.user.findUnique({ where: { username } });
+    const user = await systemScope(() => this.prisma.user.findUnique({ where: { username } }));
     if (!user || !user.isActive) {
       // Gasta o mesmo tempo do caminho feliz antes de responder: sem isto dá para
       // enumerar contas medindo o tempo de resposta.
@@ -30,7 +31,9 @@ export class AuthService {
 
     if (this.passwords.isLegacyDjangoHash(user.password)) {
       const rehashed = await this.passwords.hash(password);
-      await this.prisma.user.update({ where: { id: user.id }, data: { password: rehashed } });
+      await systemScope(() =>
+        this.prisma.user.update({ where: { id: user.id }, data: { password: rehashed } }),
+      );
     }
 
     return this.issueTokenPair(user.id.toString());
@@ -50,7 +53,9 @@ export class AuthService {
       throw new UnauthorizedException('Token is invalid or expired');
     }
 
-    const user = await this.prisma.user.findUnique({ where: { id: BigInt(payload.sub) } });
+    const user = await systemScope(() =>
+      this.prisma.user.findUnique({ where: { id: BigInt(payload.sub) } }),
+    );
     if (!user || !user.isActive) {
       throw new UnauthorizedException('Token is invalid or expired');
     }

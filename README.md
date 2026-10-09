@@ -46,6 +46,8 @@ ou localização exata do problema.
 - Enquetes e votações (voto único por morador)
 - Financeiro: categorias de despesa, orçado x realizado e relatórios
 - Controle de acesso por perfil (morador, síndico, porteiro, prestador)
+- Cadastro por código compartilhado do condomínio, gerenciado pelo síndico
+- Isolamento dos recursos da API por condomínio
 
 ## Contexto do projeto
 
@@ -118,6 +120,22 @@ Modelos do banco (`prisma/schema.prisma`): `User`, `Announcement`, `ReadConfirma
 Enums: `UserRole`, `AnnouncementSegment`, `PackageStatus`, `AccessDirection`, `TicketUrgency`,
 `TicketStatus`, `ReservationStatus`.
 
+`Condominium` identifica o condomínio de cada usuário e recurso principal. Logs, evidências,
+confirmações de leitura e votos herdam o vínculo dos recursos pais. Cada conta pertence
+a um único condomínio, inclusive contas de prestadores; nomes de usuário continuam únicos
+no sistema porque o login utiliza apenas `username`.
+
+O `CondominiumInterceptor` estabelece o contexto assíncrono pelo usuário autenticado, e o
+middleware Prisma aplica o escopo a consultas, alterações, exclusões, relatórios e referências.
+Escritas não podem transferir recursos para outro condomínio. Operações sem contexto são
+recusadas, exceto fluxos internos explicitamente autorizados de autenticação e provisionamento.
+Novos repositórios devem usar esse cliente e `tenantCreate`; queries SQL arbitrárias e escritas
+relacionais aninhadas não são permitidas no contexto comum.
+
+Esse escopo protege os recursos acessados pela API. Ele não substitui políticas de acesso
+direto ao Supabase nem torna privadas URLs de arquivos em buckets públicos; revise também
+as permissões do banco e do Storage antes de disponibilizar a aplicação em produção.
+
 ## Perfis e controle de acesso
 
 | Perfil (`UserRole`) | Papel | Exemplos do que pode fazer |
@@ -137,7 +155,9 @@ Todos sob `/api/v1`. Detalhes de corpo, parâmetros e exemplos no Swagger.
 | Módulo | Rotas |
 |---|---|
 | Auth | `POST /token` · `POST /token/refresh` (públicas) |
-| Users | `GET /users` · `GET /users/me` · `GET /users/:id` · `POST /users` (pública) · `PATCH/DELETE /users/:id` |
+| Users | `GET /users` · `GET /users/me` · `GET /users/:id` · `POST /users` (pública, exige código e não cria síndicos) · `POST /users/managed` (síndico) · `PATCH/DELETE /users/:id` |
+| Condominiums | `GET /condominiums/me` · `POST /condominiums/me/registration-code` (gerar/substituir, síndico) · `DELETE /condominiums/me/registration-code` (revogar, síndico) |
+| Admin | `GET/POST /admin/condominiums` · `DELETE /admin/condominiums/:id` (apenas sem registros vinculados) · `POST/DELETE /admin/condominiums/:id/registration-code` (administrador global) |
 | Announcements | `GET/POST /announcements` · `GET/PATCH/DELETE /announcements/:id` · `POST /announcements/:id/confirm_read` · **`POST /announcements/publish/:type`** (Template Method) |
 | Packages | `GET/POST /packages` · `GET/PATCH/DELETE /packages/:id` · `POST /packages/:id/pickup` |
 | Visitors | `GET/POST /visitors` · `GET/PATCH/DELETE /visitors/:id` · `POST /visitors/validate_token` · `GET /visitors/access-logs` |
@@ -281,7 +301,19 @@ npm run start:dev                # modo watch; produção: npm run build && npm 
 
 ### Banco de dados e seed
 
-O schema Prisma espelha as tabelas já existentes no Supabase. Para popular usuários de exemplo:
+O schema Prisma parte das tabelas existentes no Supabase e acrescenta o vínculo com condomínios.
+**Antes de iniciar a API atualizada em um banco existente**, faça backup, revise e aplique
+`backend/prisma/condominiums.sql` com uma conta administradora. O script incremental é
+transacional, não é idempotente e vincula todos os registros atuais ao **Condomínio legado**
+(ID `1`). Se os registros antigos já representarem vários condomínios, prepare um mapeamento
+e ajuste o backfill antes de aplicá-lo. O script não cria nem divulga códigos.
+
+Não execute `prisma db push` ou reset no Supabase para fazer essa migração. Em um banco
+descartável vazio de testes, `prisma db push` pode criar diretamente o schema completo.
+A migração SQL deve ser revisada contra o schema real do Supabase antes de execução,
+inclusive o nome da antiga restrição única de categorias de despesa.
+
+Para provisionar o primeiro síndico e usuários de exemplo:
 
 ```bash
 cd backend
@@ -291,6 +323,40 @@ SEED_PASSWORD=suaSenha npm run prisma:seed
 Cria os usuários `sindico` (manager), `morador` (resident), `porteiro` (doorman) e `prestador`
 (provider), todos com a senha definida em `SEED_PASSWORD`. `npm run prisma:studio` abre uma UI
 para inspecionar o banco.
+
+O seed usa `SEED_CONDOMINIUM_ID` (padrão `1`) e `SEED_CONDOMINIUM_NAME` (nome para novos
+condomínios). Para provisionar outro condomínio, use também um `SEED_USER_PREFIX` distinto;
+o seed recusa reutilizar usuários que já pertencem a outro condomínio. O administrador
+pode provisionar uma conta inicial sem código; o síndico então gera o primeiro código
+na tela **Usuários**. O cadastro público nunca provisiona síndicos.
+
+O administrador global usa o campo existente `isSuperuser`, atribuído apenas pelo
+provisionamento local (nunca por DTOs públicos ou pela gestão do síndico). Para criar
+uma conta administrativa, defina `ADMIN_PASSWORD` (mínimo de 16 caracteres) no ambiente
+e execute `npm run admin:provision` em `backend`. O usuário padrão é `admin`; configure
+`ADMIN_USERNAME`, `ADMIN_EMAIL` e `ADMIN_CONDOMINIUM_ID` se necessário. O comando não
+promove nem substitui usuários existentes e não imprime a senha.
+
+Depois do login, o admin acessa `/dashboard/admin`: cadastra um condomínio informando apenas
+o nome e gera seu código, sem criar contas de síndico. Também gera/substitui ou revoga
+o código de condomínios existentes. Nomes repetidos são bloqueados no banco, ignorando
+maiúsculas/minúsculas e espaços extras. Aplique também `backend/prisma/condominium-code-display.sql`
+em bancos existentes, depois de resolver nomes duplicados; o script não renomeia nem exclui registros.
+O código fica persistido no banco junto ao hash de validação, é reutilizável
+e não expira: permanece válido após fechar a tela, até ser substituído ou revogado.
+O valor permanece visível apenas na API e no painel do administrador global, inclusive
+após recarregar. Restrinja o acesso direto ao banco, pois o código de cadastro é armazenado
+em formato recuperável. Códigos antigos salvos apenas como hash continuam válidos, mas não
+podem ser exibidos sem informar o valor original ou gerar um novo código.
+O admin pode excluir um condomínio após confirmação no painel, desde que não existam
+usuários ou outros registros vinculados. A exclusão é definitiva, invalida seu código
+e não remove dados vinculados em cascata; nesses casos a API retorna conflito (409).
+As confirmações de geração/revogação de código e exclusão de condomínio aparecem
+em janelas do próprio frontend, com Cancelar/Confirmar e fechamento por Escape.
+Durante a operação, os controles ficam bloqueados; sucesso e erro aparecem na tela.
+O cadastro público continua restrito a moradores, porteiros e prestadores; contas de síndico
+devem ser provisionadas pelo seed ou pela gestão de usuários existente. Síndicos comuns não acessam essa
+API e não podem alterar ou excluir contas de administradores globais.
 
 ### Documentação da API (Swagger)
 
@@ -311,9 +377,73 @@ Passo a passo para testar rotas protegidas:
 
 ### Frontend (Next.js)
 
-Atualmente contém a tela de login (com seletor de perfil) e dashboards placeholder por perfil
-(`/dashboard/resident|manager|doorman|provider`). Consome `POST /api/v1/token` e
-`GET /api/v1/users/me`, guardando os tokens no `localStorage`.
+O frontend segue a referência visual mobile do CondoFlow, com entrada (`/`), login com seletor
+de perfil (`/login`), cadastro público (`/register`), perfil pessoal (`/dashboard/profile`) e gestão de usuários exclusiva do
+síndico (`/dashboard/users`). O login usa **nome de usuário**, não e-mail, conforme o contrato
+do backend. O perfil escolhido é conferido com o perfil real retornado por `/users/me`.
+
+Quem não tem conta pode usar **Começar** na página inicial ou **Criar conta** no login.
+O cadastro usa `POST /api/v1/users` sem autenticação e exige `condominiumCode`, o código
+fornecido pelo síndico. Permite apenas morador, porteiro e prestador; contas de síndico
+não podem ser criadas por esse endpoint, mesmo enviando uma requisição diretamente.
+O formulário valida a confirmação da senha e, após a criação, oferece acesso ao login
+sem autenticar automaticamente. O código determina o condomínio, sem aceitar um ID
+escolhido pelo visitante.
+
+Na tela **Usuários**, o síndico pode gerar/substituir ou revogar o código do próprio condomínio.
+Ele é compartilhado, reutilizável e não expira automaticamente. Substituí-lo invalida o anterior;
+revogá-lo bloqueia novos cadastros públicos, sem afetar as contas existentes. O hash
+SHA-256 é usado para validar o código aleatório de 128 bits; seu valor também é armazenado
+para exibição contínua no painel do admin, mas nunca retornado no perfil público do condomínio.
+A validade é conferida novamente sob lock transacional antes de criar a conta, evitando
+o uso de um código revogado durante a operação. A gestão autenticada usa `POST /users/managed`,
+sem exigir código, e sempre vincula a conta ao condomínio do síndico.
+
+A gestão de usuários inclui paginação, detalhes, cadastro, edição e exclusão com confirmação.
+O perfil pessoal é somente leitura: a API permite edição de usuários apenas ao síndico,
+e não oferece recuperação ou alteração de senha nesta interface.
+
+As rotas de dashboard validam a sessão e o perfil antes de mostrar conteúdo. Tokens continuam
+armazenados no `localStorage`; requisições autenticadas renovam a sessão uma vez ao receber
+401, e logout ou refresh inválido redirecionam ao login. A autorização efetiva permanece nos
+guards do backend. Os quatro dashboards têm resumos calculados a partir dos registros reais,
+atalhos por perfil e ocorrências recentes. O visual mobile-first segue o protótipo:
+cards brancos com sombra leve, ícones azuis, filtros em chips e navegação inferior em celulares;
+em telas maiores, o conteúdo mantém uma largura confortável e usa colunas responsivas.
+
+Telas integradas disponíveis em `/dashboard`:
+
+| Tela | Rota | Funcionalidades |
+|---|---|---|
+| Comunicados | `/announcements` | Listagem, segmentação, urgência, CRUD do síndico e confirmação de leitura do morador |
+| Encomendas | `/packages` | Foto no recebimento, listagem por apartamento, edição/exclusão e registro de retirada pelo porteiro |
+| Visitantes | `/visitors` | Autorização do morador, validade, token, geração local e download de QR Code |
+| Controle de acesso | `/access-logs` | Validação de token pelo porteiro e histórico de entradas/saídas |
+| Chamados | `/tickets` | Abertura com foto opcional, edição, histórico, mudança de status e atribuição de prestador |
+| Prestadores | `/providers` | Contratos, documento, contato e vínculo com conta de prestador |
+| Evidências | `/evidences` | Fotos antes/depois e notas vinculadas aos chamados atribuídos |
+| Áreas comuns | `/common-areas` | Consulta de espaços e CRUD pelo síndico |
+| Reservas | `/reservations` | Seleção de área, período, edição/exclusão; conflitos de horário são validados pela API |
+| Enquetes | `/polls` | Criação com opções, edição, resultados e voto do morador |
+| Finanças | `/finance` | Despesas, orçado/realizado e relatórios por categoria ou comparação de orçamento |
+| Categorias financeiras | `/categories` | Consulta e CRUD pelo síndico |
+| Notificações | `/notifications` | Atividades recentes dos módulos autorizados; leitura salva neste navegador por conta/condomínio |
+| Histórico geral | `/history` | Linha do tempo dos registros recentes acessíveis ao perfil |
+
+Os recursos com consulta individual também possuem `/dashboard/<módulo>/<id>` para detalhes.
+Os formulários e confirmações são janelas do frontend, com erros explícitos, cancelamento
+e bloqueio durante envio. Seletores de referências carregam todas as páginas da API; uploads
+usam `FormData` com o boundary do navegador (até 10 MB por arquivo na interface).
+A busca e os chips de situação filtram a página atual; a paginação segue o contrato da API.
+
+Listas, resumos, códigos e atividades atualizam automaticamente a cada 15 segundos enquanto
+a aba está visível, e ao retornar à aba. A atualização não recarrega o documento nem apaga
+rascunhos; formulários/modais abertos pausam a atualização da lista correspondente.
+As atividades combinam os últimos registros retornados pelos módulos (até uma página por fonte),
+não representam notificações push ou um sistema de entrega persistente no servidor.
+Não são exibidos contadores, taxas de reserva ou ações fictícias do protótipo: por exemplo,
+somente moradores abrem chamados/autorizam visitantes, e prestadores atuam nos serviços atribuídos,
+conforme os guards existentes. Fotos e documentos dependem da configuração do Supabase Storage.
 
 ```bash
 cd frontend
@@ -326,12 +456,16 @@ Configuração necessária para integrar com o backend local:
 
 - Em `frontend/.env.local`, aponte para a porta do backend:
   `NEXT_PUBLIC_API_URL=http://localhost:8000`
-  (o valor de exemplo e o fallback em `lib/api.ts` usam `3000`, que é a porta do próprio Next).
+  (o valor de exemplo e o fallback em `lib/api.ts` usam `8000`, a porta padrão do NestJS).
 - Em `backend/.env`, inclua a origem do Next no CORS:
   `CORS_ALLOWED_ORIGINS=http://localhost:3000`
   (o padrão do backend é `http://localhost:5173`, herdado de um frontend Vite anterior).
 
-Outros scripts: `npm run build` / `npm run start` (produção) e `npm run lint`.
+Outros comandos: `npm run build` / `npm run start` (produção), `npm run typecheck`
+e `npm test` (testes unitários do cliente HTTP e sessão, sem conexão ao Supabase).
+Para os testes de interface, execute `npx playwright install chromium`, `npm run build`
+e `npm run test:ui`. A suíte inicia o frontend na porta `3101` e simula a API no navegador,
+sem criar ou remover usuários reais.
 
 ### Testes e qualidade
 
@@ -343,8 +477,11 @@ npm run typecheck     # tsc --noEmit
 npm run test:cov      # cobertura em backend/coverage
 ```
 
-O teste de concorrência de reserva (`reservations.concurrency.spec.ts`) só roda com
-`TEST_DATABASE_URL` apontando para um Postgres descartável; sem ela é ignorado.
+Os testes de concorrência de reserva, acesso entre moradores e cadastro/isolamento entre
+condomínios só rodam com `TEST_DATABASE_URL` apontando para um Postgres descartável com o
+schema atualizado; sem ela são ignorados. As suítes alteram e removem dados:
+**nunca use a URL do Supabase real**. Os testes unitários de cadastro, ciclo dos códigos
+e middleware de escopo não dependem de banco.
 
 ## Variáveis de ambiente
 
