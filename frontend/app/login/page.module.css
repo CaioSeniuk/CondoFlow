@@ -1,5 +1,5 @@
 .page {
-  min-height: 100vh;
+  min-height: 100dvh;
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
 }
@@ -44,7 +44,7 @@
   align-items: center;
   justify-content: center;
   padding: 40px 24px;
-  background: var(--color-bg);
+  background: var(--color-surface);
 }
 
 /* Abaixo do breakpoint, cai para o layout mobile: só o card, sem o painel de marca. */
@@ -55,5 +55,10 @@
 
   .brandPanel {
     display: none;
+  }
+
+  .formPanel {
+    align-items: flex-start;
+    padding: 24px 0;
   }
 }

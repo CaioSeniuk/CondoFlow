@@ -1,10 +1,9 @@
 import { Test } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { UserRole } from '@prisma/client';
+import { PrismaClient, UserRole } from '@prisma/client';
 import * as request from 'supertest';
 import { AppModule } from './app.module';
-import { PrismaService } from './prisma/prisma.service';
 
 /**
  * Regressão da regra inegociável nº 2: controle de acesso por perfil em toda rota.
@@ -19,7 +18,8 @@ const describeWithDb = DB ? describe : describe.skip;
 
 describeWithDb('Controle de acesso entre moradores (IDOR)', () => {
   let app: any;
-  let prisma: PrismaService;
+  let prisma: PrismaClient;
+  let condominiumId: bigint;
   let tokenA: string;
   let visitorOfB: bigint;
   let ticketOfB: bigint;
@@ -29,17 +29,19 @@ describeWithDb('Controle de acesso entre moradores (IDOR)', () => {
     const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
     app = moduleRef.createNestApplication();
     await app.init();
-    prisma = app.get(PrismaService);
+    prisma = new PrismaClient();
 
     await prisma.statusHistory.deleteMany();
     await prisma.ticket.deleteMany();
     await prisma.visitor.deleteMany();
     await prisma.reservation.deleteMany();
     await prisma.user.deleteMany();
+    condominiumId = (await prisma.condominium.create({ data: { name: 'Test IDOR' } })).id;
 
     const mk = (n: string, block: string, apt: string) =>
       prisma.user.create({
         data: {
+          condominiumId,
           username: n,
           password: 'x',
           role: UserRole.resident,
@@ -55,6 +57,7 @@ describeWithDb('Controle de acesso entre moradores (IDOR)', () => {
 
     const v = await prisma.visitor.create({
       data: {
+        condominiumId,
         name: 'Visita do B',
         document: '123.456.789-00',
         block: 'B',
@@ -67,7 +70,13 @@ describeWithDb('Controle de acesso entre moradores (IDOR)', () => {
     visitorOfB = v.id;
 
     const t = await prisma.ticket.create({
-      data: { residentId: b.id, category: 'Plumbing', location: 'Bath', description: 'Leak' },
+      data: {
+        condominiumId,
+        residentId: b.id,
+        category: 'Plumbing',
+        location: 'Bath',
+        description: 'Leak',
+      },
     });
     ticketOfB = t.id;
 
@@ -81,6 +90,7 @@ describeWithDb('Controle de acesso entre moradores (IDOR)', () => {
 
   afterAll(async () => {
     await app?.close();
+    await prisma?.$disconnect();
   });
 
   const auth = (r: request.Test) => r.set('Authorization', `Bearer ${tokenA}`);

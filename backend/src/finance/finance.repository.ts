@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { tenantCreate } from '../common/condominium-context';
 
 @Injectable()
 export class ExpenseCategoriesRepository {
@@ -14,8 +15,8 @@ export class ExpenseCategoriesRepository {
     return this.prisma.expenseCategory.findUnique({ where: { id } });
   }
 
-  create(data: Prisma.ExpenseCategoryUncheckedCreateInput) {
-    return this.prisma.expenseCategory.create({ data });
+  create(data: Omit<Prisma.ExpenseCategoryUncheckedCreateInput, 'condominiumId'>) {
+    return this.prisma.expenseCategory.create({ data: tenantCreate(data) });
   }
 
   update(id: bigint, data: Prisma.ExpenseCategoryUncheckedUpdateInput) {
@@ -50,8 +51,8 @@ export class ExpensesRepository {
     return this.prisma.expense.findUnique({ where: { id }, include: includeCategoryName });
   }
 
-  create(data: Prisma.ExpenseUncheckedCreateInput) {
-    return this.prisma.expense.create({ data, include: includeCategoryName });
+  create(data: Omit<Prisma.ExpenseUncheckedCreateInput, 'condominiumId'>) {
+    return this.prisma.expense.create({ data: tenantCreate(data), include: includeCategoryName });
   }
 
   update(id: bigint, data: Prisma.ExpenseUncheckedUpdateInput) {

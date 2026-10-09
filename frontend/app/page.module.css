@@ -1,0 +1,8 @@
+.page { display: grid; place-items: center; min-height: 100dvh; background: white; padding: 24px; }
+.content { width: 100%; max-width: 340px; text-align: center; }
+.logo { display: grid; place-items: center; background: var(--color-primary); color: white; border-radius: 20px; width: 80px; height: 80px; font-size: 40px; font-weight: 700; margin: 0 auto 20px; }
+.content h1 { font-size: 26px; margin: 0 0 12px; }
+.content p { color: var(--color-text-muted); font-size: 14px; }
+.start { display: block; background: var(--color-primary); color: white; text-decoration: none; border-radius: 8px; padding: 14px; font-size: 15px; margin-top: 56px; }
+.start:hover { background: var(--color-primary-hover); }
+.login { display: inline-block; margin-top: 16px; color: var(--color-primary); font-size: 13px; text-decoration: none; }

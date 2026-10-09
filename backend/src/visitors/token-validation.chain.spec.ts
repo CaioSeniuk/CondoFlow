@@ -4,6 +4,7 @@ import { VisitorNotFoundError, VisitorTokenInvalidError } from './visitors.error
 
 function visitorValidFor(validFrom: Date, validUntil: Date): Visitor {
   return {
+    condominiumId: 1n,
     id: 10n,
     createdAt: new Date(),
     updatedAt: new Date(),

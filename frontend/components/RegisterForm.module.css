@@ -1,0 +1,8 @@
+.container { width: 100%; max-width: 520px; padding: 32px 24px; }
+.container h1 { font-size: 22px; margin: 24px 0 12px; }
+.back { color: var(--color-primary); text-decoration: none; font-size: 14px; }
+.submit { display: block; width: 100%; text-align: center; padding: 14px; margin-top: 24px; border: none; border-radius: 8px; background: var(--color-primary); color: white; font-size: 15px; font-weight: 600; text-decoration: none; }
+.submit:hover:not(:disabled) { background: var(--color-primary-hover); }
+.submit:disabled { opacity: .6; cursor: not-allowed; }
+.login { text-align: center; font-size: 14px; color: var(--color-text-muted); margin-top: 24px; }
+.login a { color: var(--color-primary); }

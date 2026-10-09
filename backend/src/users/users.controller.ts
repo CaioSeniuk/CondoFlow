@@ -17,7 +17,7 @@ import { RolesGuard } from '../auth/roles.guard';
 import { Public } from '../auth/public.decorator';
 import { UserRole } from '@prisma/client';
 import { UsersService } from './users.service';
-import { RegisterDto, UpdateUserDto } from './dto/user.dto';
+import { CreateManagedUserDto, RegisterDto, UpdateUserDto } from './dto/user.dto';
 import { AuthenticatedUser } from '../auth/authenticated-user.interface';
 
 function excludePassword<T extends { password: string }>(user: T) {
@@ -58,7 +58,7 @@ export class UsersController {
   @Post()
   @ApiOperation({
     summary: 'Register a user',
-    description: 'Public endpoint. Creates the account with the given role and hashed password.',
+    description: 'Public endpoint. Requires an active condominium code. Cannot create managers.',
   })
   @ApiBody({
     type: RegisterDto,
@@ -72,6 +72,7 @@ export class UsersController {
           lastName: 'Silva',
           email: 'joao.silva@example.com',
           role: 'resident',
+          condominiumCode: '0123456789ABCDEF0123456789ABCDEF',
           block: 'A',
           apartment: '101',
           phone: '(41) 99999-0000',
@@ -82,6 +83,16 @@ export class UsersController {
   async create(@Body() dto: RegisterDto) {
     const user = await this.usersService.register(dto);
     return excludePassword(user);
+  }
+
+  @Post('managed')
+  @Roles(UserRole.manager)
+  @ApiOperation({
+    summary: 'Create a user in your condominium. Manager only; no public code required.',
+  })
+  @ApiBody({ type: CreateManagedUserDto })
+  async createManaged(@Body() dto: CreateManagedUserDto) {
+    return excludePassword(await this.usersService.createManaged(dto));
   }
 
   @Patch(':id')
