@@ -5,6 +5,7 @@ import { ReservationsRepository } from './reservations.repository';
 import { AuthenticatedUser } from '../auth/authenticated-user.interface';
 
 const resident: AuthenticatedUser = {
+  condominiumId: 1n,
   id: 1n,
   username: 'resident1',
   role: UserRole.resident,

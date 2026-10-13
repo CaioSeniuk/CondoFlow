@@ -66,7 +66,10 @@ export class CommonAreasController {
   @ApiBody({
     type: UpdateCommonAreaDto,
     examples: {
-      default: { summary: 'Exemplo de atualização', value: { description: 'Capacidade para 80 pessoas' } },
+      default: {
+        summary: 'Exemplo de atualização',
+        value: { description: 'Capacidade para 80 pessoas' },
+      },
     },
   })
   update(

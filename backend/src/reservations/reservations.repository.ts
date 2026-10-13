@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma, ReservationStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { tenantCreate } from '../common/condominium-context';
 
 /** Aceita tanto o client normal quanto o client de dentro de uma transação. */
 type Db = PrismaService | Prisma.TransactionClient;
@@ -17,8 +18,8 @@ export class CommonAreasRepository {
     return this.prisma.commonArea.findUnique({ where: { id } });
   }
 
-  create(data: Prisma.CommonAreaUncheckedCreateInput) {
-    return this.prisma.commonArea.create({ data });
+  create(data: Omit<Prisma.CommonAreaUncheckedCreateInput, 'condominiumId'>) {
+    return this.prisma.commonArea.create({ data: tenantCreate(data) });
   }
 
   update(id: bigint, data: Prisma.CommonAreaUncheckedUpdateInput) {
@@ -98,8 +99,11 @@ export class ReservationsRepository {
     });
   }
 
-  create(data: Prisma.ReservationUncheckedCreateInput, db: Db = this.prisma) {
-    return db.reservation.create({ data, include: includeNames });
+  create(
+    data: Omit<Prisma.ReservationUncheckedCreateInput, 'condominiumId'>,
+    db: Db = this.prisma,
+  ) {
+    return db.reservation.create({ data: tenantCreate(data), include: includeNames });
   }
 
   update(id: bigint, data: Prisma.ReservationUncheckedUpdateInput, db: Db = this.prisma) {
