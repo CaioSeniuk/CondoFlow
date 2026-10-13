@@ -32,7 +32,10 @@ export interface TokenPairResponse {
 
 /** Formato retornado por GET /api/v1/users/me (senha excluída no backend). */
 export interface AuthenticatedUser {
-  id: number | string;
+  isSuperuser?: boolean;
+  condominiumId: string;
+  condominium?: { id: string; name: string };
+  id: string;
   username: string;
   firstName: string;
   lastName: string;
@@ -42,4 +45,49 @@ export interface AuthenticatedUser {
   apartment: string;
   phone: string;
   isActive: boolean;
+}
+
+export interface AdminCondominium {
+  id: string;
+  name: string;
+  registrationCode: string | null;
+  codeUpdatedAt: string | null;
+}
+
+export interface ProvisionCondominiumInput {
+  name: string;
+}
+
+export interface PaginatedResult<T> {
+  count: number;
+  next: number | null;
+  previous: number | null;
+  results: T[];
+}
+
+export interface UserInput {
+  username: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  role: UserRole;
+  block: string;
+  apartment: string;
+  phone: string;
+}
+
+export interface RegisterUserInput extends UserInput {
+  password: string;
+}
+
+export interface PublicRegisterUserInput extends Omit<RegisterUserInput, 'role'> {
+  role: Exclude<UserRole, 'manager'>;
+  condominiumCode: string;
+}
+
+export interface CondominiumInfo {
+  id: string;
+  name: string;
+  codeEnabled: boolean;
+  codeUpdatedAt: string | null;
 }
