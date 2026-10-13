@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma, TicketStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { tenantCreate } from '../common/condominium-context';
 
 const includeHistory = { statusHistory: { orderBy: { changedAt: 'asc' as const } } };
 
@@ -43,8 +44,8 @@ export class TicketsRepository {
     });
   }
 
-  create(data: Prisma.TicketUncheckedCreateInput) {
-    return this.prisma.ticket.create({ data, include: includeHistory });
+  create(data: Omit<Prisma.TicketUncheckedCreateInput, 'condominiumId'>) {
+    return this.prisma.ticket.create({ data: tenantCreate(data), include: includeHistory });
   }
 
   update(id: bigint, data: Prisma.TicketUncheckedUpdateInput) {

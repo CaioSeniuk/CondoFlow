@@ -8,10 +8,7 @@ import { assertVisible } from '../common/access';
 import { auditOnCreate, auditOnUpdate } from '../common/audit';
 import { AuthenticatedUser } from '../auth/authenticated-user.interface';
 
-import {
-  CommonAreasRepository,
-  ReservationsRepository,
-} from './reservations.repository';
+import { CommonAreasRepository, ReservationsRepository } from './reservations.repository';
 
 import {
   CreateCommonAreaDto,
@@ -19,7 +16,6 @@ import {
   UpdateCommonAreaDto,
   UpdateReservationDto,
 } from './dto/reservation.dto';
-
 
 @Injectable()
 export class CommonAreasService {
@@ -40,11 +36,7 @@ export class CommonAreasService {
     });
   }
 
-  update(
-    id: bigint,
-    dto: UpdateCommonAreaDto,
-    user: AuthenticatedUser,
-  ) {
+  update(id: bigint, dto: UpdateCommonAreaDto, user: AuthenticatedUser) {
     return this.repo.update(id, {
       ...dto,
       ...auditOnUpdate(user),
@@ -56,20 +48,15 @@ export class CommonAreasService {
   }
 }
 
-
 @Injectable()
 export class ReservationsService {
-
   // Singleton responsável pelo gerenciamento das reservas
-  private readonly reservationManager =
-    ReservationManager.getInstance();
+  private readonly reservationManager = ReservationManager.getInstance();
 
   // Singleton responsável pelas notificações
-  private readonly notificationManager =
-    NotificationManager.getInstance();
+  private readonly notificationManager = NotificationManager.getInstance();
 
   constructor(private repo: ReservationsRepository) {}
-
 
   listForUser(user: AuthenticatedUser) {
     if (user.role === UserRole.resident) {
@@ -83,11 +70,9 @@ export class ReservationsService {
     return Promise.resolve([]);
   }
 
-
   findById(id: bigint) {
     return this.repo.findById(id);
   }
-
 
   /**
    * Morador só pode acessar a própria reserva.
@@ -99,139 +84,83 @@ export class ReservationsService {
     }
 
     if (user.role === UserRole.resident) {
-      return this.repo.findByIdForResident(
-        id,
-        user.id,
-      );
+      return this.repo.findByIdForResident(id, user.id);
     }
 
     return Promise.resolve(null);
   }
 
-
-  async create(
-    dto: CreateReservationDto,
-    resident: AuthenticatedUser,
-  ) {
+  async create(dto: CreateReservationDto, resident: AuthenticatedUser) {
     const commonAreaId = BigInt(dto.commonArea);
 
-    this.assertValidWindow(
-      dto.startTime,
-      dto.endTime,
-    );
+    this.assertValidWindow(dto.startTime, dto.endTime);
 
     /*
      * Verificação de conflito e criação da reserva
      * acontecem dentro da mesma transação.
      */
-    return this.repo.withCommonAreaLock(
-      commonAreaId,
-      async (tx) => {
+    return this.repo.withCommonAreaLock(commonAreaId, async (tx) => {
+      await this.assertNoConflict(commonAreaId, dto.startTime, dto.endTime, undefined, tx);
 
-        await this.assertNoConflict(
+      const reservation = await this.repo.create(
+        {
           commonAreaId,
-          dto.startTime,
-          dto.endTime,
-          undefined,
-          tx,
-        );
+          residentId: resident.id,
+          startTime: dto.startTime,
+          endTime: dto.endTime,
+          ...auditOnCreate(resident),
+        },
+        tx,
+      );
 
-        const reservation =
-          await this.repo.create(
-            {
-              commonAreaId,
-              residentId: resident.id,
-              startTime: dto.startTime,
-              endTime: dto.endTime,
-              ...auditOnCreate(resident),
-            },
-            tx,
-          );
+      /*
+       * SINGLETON 1
+       * Registra a criação da reserva.
+       */
+      this.reservationManager.registrarReserva(commonAreaId);
 
-        /*
-         * SINGLETON 1
-         * Registra a criação da reserva.
-         */
-        this.reservationManager.registrarReserva(
-          commonAreaId,
-        );
+      /*
+       * SINGLETON 2
+       * Envia uma notificação.
+       */
+      this.notificationManager.enviarNotificacao('Reserva realizada com sucesso.');
 
-        /*
-         * SINGLETON 2
-         * Envia uma notificação.
-         */
-        this.notificationManager.enviarNotificacao(
-          'Reserva realizada com sucesso.',
-        );
-
-        return reservation;
-      },
-    );
+      return reservation;
+    });
   }
 
-
-  async update(
-    id: bigint,
-    dto: UpdateReservationDto,
-    user: AuthenticatedUser,
-  ) {
-    const current = assertVisible(
-      await this.findByIdForUser(id, user),
-    );
+  async update(id: bigint, dto: UpdateReservationDto, user: AuthenticatedUser) {
+    const current = assertVisible(await this.findByIdForUser(id, user));
 
     const commonAreaId =
-      dto.commonArea === undefined
-        ? current.commonAreaId
-        : BigInt(dto.commonArea);
+      dto.commonArea === undefined ? current.commonAreaId : BigInt(dto.commonArea);
 
-    const startTime =
-      dto.startTime ?? current.startTime;
+    const startTime = dto.startTime ?? current.startTime;
 
-    const endTime =
-      dto.endTime ?? current.endTime;
+    const endTime = dto.endTime ?? current.endTime;
 
-    this.assertValidWindow(
-      startTime,
-      endTime,
-    );
+    this.assertValidWindow(startTime, endTime);
 
-    return this.repo.withCommonAreaLock(
-      commonAreaId,
-      async (tx) => {
+    return this.repo.withCommonAreaLock(commonAreaId, async (tx) => {
+      await this.assertNoConflict(commonAreaId, startTime, endTime, id, tx);
 
-        await this.assertNoConflict(
+      return this.repo.update(
+        id,
+        {
           commonAreaId,
           startTime,
           endTime,
-          id,
-          tx,
-        );
-
-        return this.repo.update(
-          id,
-          {
-            commonAreaId,
-            startTime,
-            endTime,
-            ...auditOnUpdate(user),
-          },
-          tx,
-        );
-      },
-    );
+          ...auditOnUpdate(user),
+        },
+        tx,
+      );
+    });
   }
 
+  async remove(id: bigint, user: AuthenticatedUser) {
+    assertVisible(await this.findByIdForUser(id, user));
 
-  async remove(
-    id: bigint,
-    user: AuthenticatedUser,
-  ) {
-    assertVisible(
-      await this.findByIdForUser(id, user),
-    );
-
-    const reservation =
-      await this.repo.remove(id);
+    const reservation = await this.repo.remove(id);
 
     /*
      * SINGLETON 1
@@ -243,25 +172,16 @@ export class ReservationsService {
      * SINGLETON 2
      * Envia notificação de cancelamento.
      */
-    this.notificationManager.enviarNotificacao(
-      `Reserva ${id} cancelada.`,
-    );
+    this.notificationManager.enviarNotificacao(`Reserva ${id} cancelada.`);
 
     return reservation;
   }
 
-
-  private assertValidWindow(
-    startTime: Date,
-    endTime: Date,
-  ) {
+  private assertValidWindow(startTime: Date, endTime: Date) {
     if (startTime >= endTime) {
-      throw new BadRequestException(
-        'startTime must be before endTime.',
-      );
+      throw new BadRequestException('startTime must be before endTime.');
     }
   }
-
 
   private async assertNoConflict(
     commonAreaId: bigint,
@@ -270,14 +190,13 @@ export class ReservationsService {
     excludeId: bigint | undefined,
     tx: Prisma.TransactionClient,
   ) {
-    const conflict =
-      await this.repo.findOverlapping(
-        commonAreaId,
-        startTime,
-        endTime,
-        excludeId,
-        tx,
-      );
+    const conflict = await this.repo.findOverlapping(
+      commonAreaId,
+      startTime,
+      endTime,
+      excludeId,
+      tx,
+    );
 
     if (conflict) {
       throw new BadRequestException(

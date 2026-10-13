@@ -1,25 +1,32 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { tenantCreate } from '../common/condominium-context';
 
 @Injectable()
 export class UsersRepository {
   constructor(private prisma: PrismaService) {}
 
   all() {
-    return this.prisma.user.findMany({ orderBy: { firstName: 'asc' } });
+    return this.prisma.user.findMany({
+      where: { isSuperuser: false },
+      orderBy: { firstName: 'asc' },
+    });
   }
 
   findById(id: bigint) {
-    return this.prisma.user.findUnique({ where: { id } });
+    return this.prisma.user.findUnique({
+      where: { id },
+      include: { condominium: { select: { id: true, name: true } } },
+    });
   }
 
   findByUsername(username: string) {
     return this.prisma.user.findUnique({ where: { username } });
   }
 
-  create(data: Prisma.UserCreateInput) {
-    return this.prisma.user.create({ data });
+  create(data: Omit<Prisma.UserUncheckedCreateInput, 'condominiumId'>) {
+    return this.prisma.user.create({ data: tenantCreate(data) });
   }
 
   update(id: bigint, data: Prisma.UserUpdateInput) {

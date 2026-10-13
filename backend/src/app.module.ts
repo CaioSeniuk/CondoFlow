@@ -18,6 +18,9 @@ import { ProvidersModule } from './providers/providers.module';
 import { ReservationsModule } from './reservations/reservations.module';
 import { PollsModule } from './polls/polls.module';
 import { FinanceModule } from './finance/finance.module';
+import { CondominiumInterceptor } from './common/condominium.interceptor';
+import { CondominiumsModule } from './condominiums/condominiums.module';
+import { AdminModule } from './admin/admin.module';
 
 @Module({
   imports: [
@@ -34,11 +37,14 @@ import { FinanceModule } from './finance/finance.module';
     ReservationsModule,
     PollsModule,
     FinanceModule,
+    CondominiumsModule,
+    AdminModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_PIPE, useClass: ZodValidationPipe },
     { provide: APP_INTERCEPTOR, useClass: PaginationInterceptor },
+    { provide: APP_INTERCEPTOR, useClass: CondominiumInterceptor },
   ],
 })
 export class AppModule {}

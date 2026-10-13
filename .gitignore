@@ -22,3 +22,6 @@ frontend/dist/
 npm-debug.log*
 coverage/
 *.tsbuildinfo
+frontend/.next/
+frontend/test-results/
+frontend/playwright-report/

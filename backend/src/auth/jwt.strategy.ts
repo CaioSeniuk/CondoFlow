@@ -4,6 +4,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthenticatedUser } from './authenticated-user.interface';
+import { systemScope } from '../common/condominium-context';
 
 interface JwtPayload {
   sub: string;
@@ -28,13 +29,17 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       throw new UnauthorizedException('Invalid token type');
     }
 
-    const user = await this.prisma.user.findUnique({ where: { id: BigInt(payload.sub) } });
+    const user = await systemScope(() =>
+      this.prisma.user.findUnique({ where: { id: BigInt(payload.sub) } }),
+    );
     if (!user || !user.isActive) {
       throw new UnauthorizedException();
     }
 
     return {
       id: user.id,
+      condominiumId: user.condominiumId,
+      isSuperuser: user.isSuperuser,
       username: user.username,
       role: user.role,
       block: user.block,

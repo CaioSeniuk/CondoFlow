@@ -3,6 +3,7 @@ import { isVisibleTo } from './visibility.chain';
 import { AuthenticatedUser } from '../auth/authenticated-user.interface';
 
 const resident: AuthenticatedUser = {
+  condominiumId: 1n,
   id: 1n,
   username: 'resident1',
   role: UserRole.resident,
@@ -12,6 +13,7 @@ const resident: AuthenticatedUser = {
 
 function announcement(segment: AnnouncementSegment, block = '', apartment = ''): Announcement {
   return {
+    condominiumId: 1n,
     id: 1n,
     createdAt: new Date(),
     updatedAt: new Date(),
