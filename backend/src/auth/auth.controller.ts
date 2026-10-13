@@ -18,7 +18,7 @@ export class AuthController {
     examples: {
       default: {
         summary: 'Exemplo de login',
-        value: { username: 'joao.silva', password: 'SenhaForte123' },
+        value: { username: 'joao.silva' },
       },
     },
   })

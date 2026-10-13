@@ -67,7 +67,6 @@ export class UsersController {
         summary: 'Exemplo de cadastro',
         value: {
           username: 'joao.silva',
-          password: 'SenhaForte123',
           firstName: 'João',
           lastName: 'Silva',
           email: 'joao.silva@example.com',
