@@ -8,7 +8,7 @@ COPY package*.json ./
 RUN npm ci --ignore-scripts && npm rebuild bcrypt
 
 COPY prisma ./prisma
-RUN npx prisma@5.22.0 generate
+RUN ./node_modules/.bin/prisma generate
 
 COPY tsconfig*.json nest-cli.json ./
 COPY src ./src
@@ -24,7 +24,7 @@ COPY package*.json ./
 RUN npm ci --omit=dev --ignore-scripts && npm rebuild bcrypt
 
 COPY prisma ./prisma
-RUN npx prisma@5.22.0 generate
+COPY --from=build /app/node_modules/.prisma ./node_modules/.prisma
 
 COPY --from=build /app/dist ./dist
 

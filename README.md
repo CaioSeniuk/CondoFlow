@@ -288,6 +288,8 @@ docker compose up --build
 ```
 
 API em `http://localhost:8000`.
+O build usa o Prisma instalado pelo lockfile e copia o client gerado para a imagem
+de execução, sem instalar pacotes adicionais via `npx`.
 
 ### Backend (local, requer Node 26)
 
