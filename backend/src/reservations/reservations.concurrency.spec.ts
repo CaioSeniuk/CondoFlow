@@ -40,6 +40,7 @@ describeWithDb('Reserva de área comum sob concorrência', () => {
       title,
       () => {
         expect.hasAssertions();
+        expect(condominiumId).toBeDefined();
         return condominiumContext.run({ condominiumId }, fn);
       },
       timeout,

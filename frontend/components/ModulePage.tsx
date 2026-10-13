@@ -376,7 +376,7 @@ function ResourcePage({ module, recordId }: Readonly<{ module: ModuleDefinition;
     {!recordId && <StatusFilters module={module} status={statusFilter} onChange={setStatusFilter} />}
     <p className={styles.muted}>Atualização automática a cada 15 segundos e ao voltar à aba.</p>
     {!recordId && <div className={styles.toolbar}>
-      <label className={styles.field}>Buscar nesta página
+      <label className={styles.field}>Buscar nesta página{' '}
         <input type="search" value={search} onChange={(event) => setSearch(event.target.value)} />
       </label>
       <button className={styles.secondary} disabled={busy} onClick={() => void load()}>Atualizar</button>

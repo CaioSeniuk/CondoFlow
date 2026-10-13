@@ -81,6 +81,12 @@ function validatePayload(payload: Record<string, unknown>) {
   }
 }
 
+function multipartValue(value: unknown): string {
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number' || typeof value === 'boolean' || typeof value === 'bigint') return String(value);
+  return JSON.stringify(value) ?? '';
+}
+
 function requestBody(action: RecordAction, form: FormData) {
   const payload: Record<string, unknown> = {};
   const upload = new FormData();
@@ -93,7 +99,7 @@ function requestBody(action: RecordAction, form: FormData) {
   if (action.method === 'DELETE') return undefined;
   if (!action.multipart) return payload;
   for (const [key, value] of Object.entries(payload)) {
-    if (value !== null) upload.set(key, String(value));
+    if (value !== null) upload.set(key, multipartValue(value));
   }
   return upload;
 }
@@ -118,6 +124,14 @@ type FieldProps = Readonly<{
   choices: DomainRecord[];
 }>;
 
+function choiceLabel(choice: DomainRecord, field: FieldDefinition): string {
+  const value = choice[field.reference?.labelKey ?? 'name'];
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean' || typeof value === 'bigint') {
+    return String(value);
+  }
+  return choice.id;
+}
+
 function FieldControl({ field, fieldId, value, locked, record, choices }: FieldProps) {
   if (field.type === 'textarea' || field.type === 'options') {
     return <textarea id={fieldId} name={field.key} rows={4} required={field.required} maxLength={field.maxLength} defaultValue={value} />;
@@ -127,7 +141,7 @@ function FieldControl({ field, fieldId, value, locked, record, choices }: FieldP
       <option value="">Selecione</option>
       {field.options?.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
       {choices.map((choice) => <option key={choice.id} value={choice.id}>
-        {String(choice[field.reference?.labelKey ?? 'name'] ?? choice.id)} · #{choice.id}
+        {choiceLabel(choice, field)} · #{choice.id}
       </option>)}
     </select>;
   }
@@ -145,7 +159,8 @@ function RecordFields({ action, user, titleId, choices }: Readonly<{
 }>) {
   return <>{action.fields.map((field) => {
     const locked = user.role === 'resident' && (field.key === 'block' || field.key === 'apartment');
-    const value = locked ? user[field.key === 'block' ? 'block' : 'apartment'] : initialValue(field, action.record);
+    const addressKey = field.key === 'block' ? 'block' : 'apartment';
+    const value = locked ? user[addressKey] : initialValue(field, action.record);
     const fieldId = `${titleId}-${field.key}`;
     const wide = field.type === 'textarea' || field.type === 'options';
     return <div key={field.key} className={`${styles.field} ${wide ? styles.wide : ''}`}>

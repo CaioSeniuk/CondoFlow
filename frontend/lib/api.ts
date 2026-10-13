@@ -117,6 +117,16 @@ function sendAuthenticated(path: string, init: RequestInit, token: string) {
   return fetch(`${API_URL}/api/v1${path}`, { cache: 'no-store', ...init, headers });
 }
 
+async function assertSuccessfulResponse(res: Response, access: string): Promise<void> {
+  if (res.ok) return;
+  if (res.status === 401) {
+    if (getAccessToken() === access) clearTokens();
+    throw new ApiError(401, 'Sua sessão expirou. Entre novamente.');
+  }
+  if (res.status === 403) throw new ApiError(403, 'Você não tem permissão para esta ação.');
+  throw new ApiError(res.status, await parseErrorMessage(res));
+}
+
 export async function authenticatedRequest<T>(path: string, init: RequestInit = {}): Promise<T> {
   let access = getAccessToken();
   if (!access) {
@@ -131,14 +141,7 @@ export async function authenticatedRequest<T>(path: string, init: RequestInit = 
     res = await sendAuthenticated(path, init, access);
   }
   if (getAccessToken() !== access) throw new ApiError(401, 'A sessão foi alterada. Entre novamente.');
-  if (!res.ok) {
-    if (res.status === 401) {
-      if (getAccessToken() === access) clearTokens();
-      throw new ApiError(401, 'Sua sessão expirou. Entre novamente.');
-    }
-    if (res.status === 403) throw new ApiError(403, 'Você não tem permissão para esta ação.');
-    throw new ApiError(res.status, await parseErrorMessage(res));
-  }
+  await assertSuccessfulResponse(res, access);
   if (res.status === 204) return undefined as T;
   return res.json();
 }
