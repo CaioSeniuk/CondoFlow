@@ -5,6 +5,7 @@ import { AccessLogRepository, VisitorsRepository } from './visitors.repository';
 import { AuthenticatedUser } from '../auth/authenticated-user.interface';
 
 const residentA101: AuthenticatedUser = {
+  condominiumId: 1n,
   id: 1n,
   username: 'resident1',
   role: UserRole.resident,
