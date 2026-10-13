@@ -5,7 +5,7 @@ import { hashRegistrationCode, newRegistrationCode } from './registration-code';
 
 @Injectable()
 export class CondominiumsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   async me() {
     const condominium = await this.prisma.condominium.findUniqueOrThrow({

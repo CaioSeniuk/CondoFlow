@@ -118,6 +118,37 @@ describe('Condominium database scope', () => {
     ).rejects.toBeInstanceOf(BadRequestException);
   });
 
+  it('validates every scalar reference before executing a write', async () => {
+    const result = await scoped(() =>
+      middleware(
+        query('Ticket', 'create', {
+          data: { residentId: 123n, providerId: 456n, createdById: 789n },
+        }),
+        next,
+      ),
+    );
+    expect(result.data.condominiumId).toBe(7n);
+    expect(exists).toHaveBeenCalledWith('User', 123n, 7n);
+    expect(exists).toHaveBeenCalledWith('Provider', 456n, 7n);
+    expect(exists).toHaveBeenCalledWith('User', 789n, 7n);
+    expect(next).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not execute a write when one of several references is outside the condominium', async () => {
+    exists.mockImplementation(async (model: string) => model !== 'Provider');
+    await expect(
+      scoped(() =>
+        middleware(
+          query('Ticket', 'create', {
+            data: { residentId: 123n, providerId: 456n },
+          }),
+          next,
+        ),
+      ),
+    ).rejects.toBeInstanceOf(NotFoundException);
+    expect(next).not.toHaveBeenCalled();
+  });
+
   it('isolates concurrent asynchronous request contexts', async () => {
     const results = await Promise.all(
       [1n, 2n, 3n].map((condominiumId) =>

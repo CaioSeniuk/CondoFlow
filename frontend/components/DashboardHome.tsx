@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useSession } from './SessionProvider';
 import { visibleModules } from '@/lib/modules';
-import { ROLE_OPTIONS } from '@/lib/types';
+import { ROLE_OPTIONS, type UserRole } from '@/lib/types';
 import styles from './Workspace.module.css';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { allRecords } from '@/lib/domain-api';
@@ -11,6 +11,46 @@ import { errorMessage } from '@/lib/api';
 import { displayValue, type DomainRecord } from '@/lib/modules';
 import { useAutoRefresh } from '@/lib/useAutoRefresh';
 import { ModuleIcon } from './ModuleIcon';
+
+const summaryKeys: Record<UserRole, string[]> = {
+  doorman: ['packages', 'visitors', 'announcements'],
+  provider: ['tickets', 'evidences', 'announcements'],
+  resident: ['tickets', 'reservations', 'announcements', 'packages'],
+  manager: ['tickets', 'reservations', 'announcements', 'packages'],
+};
+const recentKeys: Record<UserRole, string> = {
+  resident: 'announcements', doorman: 'packages', provider: 'tickets', manager: 'tickets',
+};
+const shortcutKeys: Record<UserRole, string[]> = {
+  resident: ['tickets', 'packages', 'visitors', 'reservations', 'announcements'],
+  manager: ['announcements', 'tickets', 'common-areas', 'providers'],
+  doorman: ['visitors', 'packages', 'history'],
+  provider: ['tickets', 'evidences', 'history'],
+};
+
+function summaryStats(role: UserRole, records: Record<string, DomainRecord[]> | null): [string, number | undefined][] {
+  const tickets = records?.tickets ?? [];
+  if (role === 'doorman') return [
+    ['Visitantes', records?.visitors?.length],
+    ['Encomendas pendentes', records?.packages?.filter((item) => item.status === 'pending').length],
+    ['Comunicados', records?.announcements?.length],
+  ];
+  if (role === 'provider') return [
+    ['Ativos', tickets.filter((item) => item.status !== 'resolved').length],
+    ['Pendentes', tickets.filter((item) => item.status === 'provider_assigned').length],
+    ['Resolvidos', tickets.filter((item) => item.status === 'resolved').length],
+  ];
+  return [
+    ['Chamados ativos', tickets.filter((item) => item.status !== 'resolved').length],
+    ['Reservas', records?.reservations?.length], ['Comunicados', records?.announcements?.length],
+  ];
+}
+
+function recentBadge(item: DomainRecord, module: string) {
+  if (item.urgent) return 'Urgente';
+  if (module === 'announcements') return displayValue(item.createdAt, 'createdAt');
+  return displayValue(item.status);
+}
 
 export function DashboardHome() {
   const { user } = useSession();
@@ -20,9 +60,7 @@ export function DashboardHome() {
   const requestId = useRef(0);
   const load = useCallback(async () => {
     const current = ++requestId.current;
-    const keys = user.role === 'doorman' ? ['packages', 'visitors', 'announcements']
-      : user.role === 'provider' ? ['tickets', 'evidences', 'announcements']
-        : ['tickets', 'reservations', 'announcements', 'packages'];
+    const keys = summaryKeys[user.role];
     try {
       const sources = visibleModules(user.role).filter((item) => keys.includes(item.key));
       const entries = await Promise.all(sources.map(async (item) => [item.key, await allRecords(item.path)] as const));
@@ -31,23 +69,10 @@ export function DashboardHome() {
   }, [user.role]);
   useEffect(() => { void load(); return () => { requestId.current++; }; }, [load]);
   useAutoRefresh(load);
-  const tickets = records?.tickets ?? [];
-  const stats: [string, number | undefined][] = user.role === 'doorman' ? [
-    ['Visitantes', records?.visitors?.length], ['Encomendas pendentes', records?.packages?.filter((item) => item.status === 'pending').length],
-    ['Comunicados', records?.announcements?.length],
-  ] : user.role === 'provider' ? [
-    ['Ativos', tickets.filter((item) => item.status !== 'resolved').length],
-    ['Pendentes', tickets.filter((item) => item.status === 'provider_assigned').length],
-    ['Resolvidos', tickets.filter((item) => item.status === 'resolved').length],
-  ] : [
-    ['Chamados ativos', tickets.filter((item) => item.status !== 'resolved').length],
-    ['Reservas', records?.reservations?.length], ['Comunicados', records?.announcements?.length],
-  ];
-  const recentKey = user.role === 'resident' ? 'announcements' : user.role === 'doorman' ? 'packages' : 'tickets';
+  const stats = summaryStats(user.role, records);
+  const recentKey = recentKeys[user.role];
   const recent = records?.[recentKey]?.slice(0, 3);
-  const primaryKeys = user.role === 'resident' ? ['tickets', 'packages', 'visitors', 'reservations', 'announcements']
-    : user.role === 'manager' ? ['announcements', 'tickets', 'common-areas', 'providers']
-      : user.role === 'doorman' ? ['visitors', 'packages', 'history'] : ['tickets', 'evidences', 'history'];
+  const primaryKeys = shortcutKeys[user.role];
   const primary = primaryKeys.map((key) => visibleModules(user.role).find((item) => item.key === key))
     .filter((item) => item !== undefined);
   const others = visibleModules(user.role).filter((item) => !primaryKeys.includes(item.key));
@@ -68,12 +93,10 @@ export function DashboardHome() {
       </Link>)}
     </div>
     <h2 className={styles.sectionTitle}>{user.role === 'resident' ? 'Comunicados recentes' : 'Últimas ocorrências'}</h2>
-    {!records && !error && <p role="status" className={styles.muted}>Carregando resumo...</p>}
+    {!records && !error && <output className={styles.muted}>Carregando resumo...</output>}
     {recent?.length === 0 && <p className={styles.card}>Nenhuma ocorrência recente.</p>}
     {recent?.map((item) => <Link key={item.id} className={`${styles.card} ${styles.feedLink}`} href={`/dashboard/${recentKey}`}>
-      <span className={styles.badge}>{item.urgent ? 'Urgente' : displayValue(
-        recentKey === 'announcements' ? item.createdAt : item.status,
-        recentKey === 'announcements' ? 'createdAt' : '')}</span>
+      <span className={styles.badge}>{recentBadge(item, recentKey)}</span>
       <h3>{displayValue(item.title ?? item.category ?? item.description)}</h3>
       <p className={styles.muted}>{displayValue(item.message ?? item.description)}</p>
     </Link>)}

@@ -108,24 +108,27 @@ async function renewAccess(): Promise<string> {
   return renewal;
 }
 
+function sendAuthenticated(path: string, init: RequestInit, token: string) {
+  const headers = new Headers(init.headers);
+  if (init.body && !(init.body instanceof FormData) && !headers.has('Content-Type')) {
+    headers.set('Content-Type', 'application/json');
+  }
+  headers.set('Authorization', `Bearer ${token}`);
+  return fetch(`${API_URL}/api/v1${path}`, { cache: 'no-store', ...init, headers });
+}
+
 export async function authenticatedRequest<T>(path: string, init: RequestInit = {}): Promise<T> {
   let access = getAccessToken();
   if (!access) {
     clearTokens();
     throw new ApiError(401, 'Entre para continuar.');
   }
-  const send = (token: string) => {
-    const headers = new Headers(init.headers);
-    if (init.body && !(init.body instanceof FormData) && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
-    headers.set('Authorization', `Bearer ${token}`);
-    return fetch(`${API_URL}/api/v1${path}`, { cache: 'no-store', ...init, headers });
-  };
-  let res = await send(access);
+  let res = await sendAuthenticated(path, init, access);
   if (res.status === 401) {
     const latest = getAccessToken();
     if (!latest) throw new ApiError(401, 'Entre para continuar.');
     access = latest !== access ? latest : await renewAccess();
-    res = await send(access);
+    res = await sendAuthenticated(path, init, access);
   }
   if (getAccessToken() !== access) throw new ApiError(401, 'A sessão foi alterada. Entre novamente.');
   if (!res.ok) {

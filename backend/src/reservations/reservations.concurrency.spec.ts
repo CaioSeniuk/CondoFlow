@@ -36,7 +36,14 @@ describeWithDb('Reserva de área comum sob concorrência', () => {
   let commonAreaId: bigint;
   let condominiumId: bigint;
   const scopedIt = (title: string, fn: () => Promise<void>, timeout: number) =>
-    it(title, () => condominiumContext.run({ condominiumId }, fn), timeout);
+    it(
+      title,
+      () => {
+        expect.hasAssertions();
+        return condominiumContext.run({ condominiumId }, fn);
+      },
+      timeout,
+    );
 
   async function checkThenInsert(db: PrismaService | Prisma.TransactionClient) {
     const conflict = await repo.findOverlapping(commonAreaId, start, end, undefined, db);

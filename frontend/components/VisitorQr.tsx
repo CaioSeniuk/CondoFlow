@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import QRCode from 'qrcode';
 import styles from './Workspace.module.css';
 
-export function VisitorQr({ token }: { token: string }) {
+export function VisitorQr({ token }: Readonly<{ token: string }>) {
   const [image, setImage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   useEffect(() => {
@@ -18,7 +18,7 @@ export function VisitorQr({ token }: { token: string }) {
   return <div>
     {image && <img src={image} width={220} height={220} alt="QR Code de acesso do visitante" />}
     {error && <p role="alert" className={styles.error}>{error}</p>}
-    <label className={styles.field}>Token de acesso
+    <label className={styles.field}><span>Token de acesso</span>
       <input readOnly value={token} onFocus={(event) => event.target.select()} />
     </label>
     {image && <p><a className={styles.secondary} href={image} download="acesso-visitante.png">Baixar QR Code</a></p>}

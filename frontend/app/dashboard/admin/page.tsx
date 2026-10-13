@@ -78,15 +78,25 @@ export default function AdminPage() {
     finally { setBusy(false); }
   }
 
+  let confirmationMessage = '';
+  if (confirmation) {
+    const { item, mode } = confirmation;
+    const verb = mode === 'revoke' ? 'Revogar' : 'Substituir';
+    confirmationMessage = `${verb} o código de ${item.name}? O código anterior deixará de funcionar.`;
+    if (mode === 'delete') {
+      confirmationMessage = `Excluir definitivamente o condomínio ${item.name}? Seu código deixará de funcionar. Esta ação não pode ser desfeita.`;
+    }
+  }
+
   return <>
     <h1>Administração de condomínios</h1>
     <p className={styles.muted}>Cadastre condomínios e gere códigos de cadastro reutilizáveis, sem prazo de validade.</p>
     <p className={styles.muted}>Só é possível excluir condomínios sem usuários ou outros registros vinculados.</p>
-    {notice && <p className={styles.success} role="status">{notice}</p>}
+    {notice && <output className={styles.success}>{notice}</output>}
     {error && <p className={styles.error} role="alert">{error}</p>}
     {result && <section className={styles.card}>
       <h2>Código de {result.name}</h2>
-      <label className={styles.field}>Código gerado
+      <label className={styles.field}><span>Código gerado</span>
         <input readOnly value={result.code} onFocus={(event) => event.target.select()} />
       </label>
       <p className={styles.muted}>O código continuará disponível neste painel e válido até ser substituído ou revogado.</p>
@@ -96,19 +106,19 @@ export default function AdminPage() {
       <form onSubmit={provision}>
         <fieldset disabled={busy} className={styles.fieldset}>
           <div className={styles.fields}>
-            <label className={styles.field}>Nome do condomínio
+            <label className={styles.field}><span>Nome do condomínio</span>
               <input value={input.name} required minLength={1} maxLength={150}
                 onChange={(event) => setInput({ name: event.target.value })} />
             </label>
           </div>
-          <button className={styles.primary}>Criar condomínio e gerar código</button>
+          <button type="submit" className={styles.primary}>Criar condomínio e gerar código</button>
         </fieldset>
       </form>
     </section>
-    {!data && !error && <p role="status">Carregando condomínios...</p>}
+    {!data && !error && <output>Carregando condomínios...</output>}
     {data?.results.map((item) => <article key={item.id} className={styles.card}>
       <h2>{item.name}</h2>
-      {item.registrationCode ? <label className={styles.field}>Código de cadastro de {item.name}
+      {item.registrationCode ? <label className={styles.field}><span>Código de cadastro de {item.name}</span>
         <input readOnly value={item.registrationCode} onFocus={(event) => event.target.select()} />
       </label> : <p className={styles.muted}>{item.codeUpdatedAt
         ? 'Código indisponível para exibição ou revogado. Códigos antigos armazenados apenas como hash não podem ser recuperados; gere outro para exibi-lo aqui.'
@@ -128,9 +138,7 @@ export default function AdminPage() {
     {error && <button className={styles.secondary} disabled={busy} onClick={() => void load()}>Tentar novamente</button>}
     {confirmation && <ConfirmationDialog
       title={{ generate: 'Gerar novo código', revoke: 'Revogar código', delete: 'Excluir condomínio' }[confirmation.mode]}
-      message={confirmation.mode === 'delete'
-        ? `Excluir definitivamente o condomínio ${confirmation.item.name}? Seu código deixará de funcionar. Esta ação não pode ser desfeita.`
-        : `${confirmation.mode === 'revoke' ? 'Revogar' : 'Substituir'} o código de ${confirmation.item.name}? O código anterior deixará de funcionar.`}
+      message={confirmationMessage}
       confirmLabel={{ generate: 'Confirmar geração', revoke: 'Confirmar revogação', delete: 'Confirmar exclusão' }[confirmation.mode]}
       busy={busy} onClose={() => setConfirmation(null)}
       onConfirm={() => {

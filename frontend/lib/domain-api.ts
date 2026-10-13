@@ -8,13 +8,13 @@ export function listRecords(path: string, page = 1) {
 
 export async function allRecords(path: string): Promise<DomainRecord[]> {
   const records: DomainRecord[] = [];
-  let page: number | null = 1;
-  while (page !== null) {
+  async function appendPage(page: number): Promise<DomainRecord[]> {
     const result = await listRecords(path, page);
     records.push(...result.results);
-    page = result.next;
+    if (result.next !== null) return appendPage(result.next);
+    return records;
   }
-  return records;
+  return appendPage(1);
 }
 
 export function saveRecord(path: string, method: 'POST' | 'PATCH' | 'DELETE', payload?: Record<string, unknown> | FormData) {

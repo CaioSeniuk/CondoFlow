@@ -3,14 +3,14 @@
 import { useEffect, useId, useRef } from 'react';
 import styles from './Workspace.module.css';
 
-export function ConfirmationDialog({ title, message, confirmLabel, busy, onClose, onConfirm }: {
+export function ConfirmationDialog({ title, message, confirmLabel, busy, onClose, onConfirm }: Readonly<{
   title: string;
   message: string;
   confirmLabel: string;
   busy: boolean;
   onClose: () => void;
   onConfirm: () => void;
-}) {
+}>) {
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
   const messageId = useId();

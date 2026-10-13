@@ -9,7 +9,7 @@ import { CondominiumsService } from './condominiums.service';
 @UseGuards(RolesGuard)
 @Controller('api/v1/condominiums')
 export class CondominiumsController {
-  constructor(private service: CondominiumsService) {}
+  constructor(private readonly service: CondominiumsService) {}
 
   @Get('me')
   @ApiOperation({ summary: 'Retrieve your condominium without exposing the registration code' })

@@ -9,8 +9,8 @@ import { ProvisionCondominiumDto } from './admin.dto';
 @Injectable()
 export class AdminService {
   constructor(
-    private prisma: PrismaService,
-    private condominiums: CondominiumsService,
+    private readonly prisma: PrismaService,
+    private readonly condominiums: CondominiumsService,
   ) {}
 
   list() {

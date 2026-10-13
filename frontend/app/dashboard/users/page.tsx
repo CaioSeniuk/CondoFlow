@@ -75,11 +75,11 @@ export default function UsersPage() {
       }}>+ Novo usuário</button>
     </div>
     <CondominiumCodePanel />
-    {success && <p className={styles.success} role="status">{success}</p>}
+    {success && <output className={styles.success}>{success}</output>}
     {error && <div className={styles.error} role="alert">
       <p>{error}</p><button className={styles.secondary} onClick={() => void load()}>Tentar novamente</button>
     </div>}
-    {loading ? <p className={styles.muted} role="status">Carregando usuários...</p> : !error && data && <>
+    {loading ? <output className={styles.muted}>Carregando usuários...</output> : !error && data && <>
       <p className={styles.muted}>{data.count} usuário(s) cadastrado(s)</p>
       {!data.results.length && <div className={styles.card}>Nenhum usuário cadastrado.</div>}
       {data.results.map((item) => <article key={item.id} className={styles.card}>
@@ -105,7 +105,7 @@ export default function UsersPage() {
           onClick={() => { if (data.next) setPage(data.next); }}>Próxima</button>
       </div>
     </>}
-    {opening && <p className={styles.muted} role="status">Carregando dados do usuário...</p>}
+    {opening && <output className={styles.muted}>Carregando dados do usuário...</output>}
     {action && <UserDialog action={action} onClose={() => setAction(null)} onSaved={saved} />}
   </>;
 }

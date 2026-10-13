@@ -23,11 +23,12 @@ async function main() {
       name: process.env.SEED_CONDOMINIUM_NAME ?? 'Condomínio CondoFlow',
     },
   });
-  for (const name of ['sindico', 'morador', 'porteiro', 'prestador']) {
-    const existing = await prisma.user.findUnique({ where: { username: `${prefix}${name}` } });
-    if (existing && existing.condominiumId !== condominium.id) {
+  const usernames = ['sindico', 'morador', 'porteiro', 'prestador'].map((name) => `${prefix}${name}`);
+  const existingUsers = await prisma.user.findMany({ where: { username: { in: usernames } } });
+  for (const existing of existingUsers) {
+    if (existing.condominiumId !== condominium.id) {
       throw new Error(
-        `O usuário ${prefix}${name} pertence a outro condomínio. Use SEED_USER_PREFIX distinto.`,
+        `O usuário ${existing.username} pertence a outro condomínio. Use SEED_USER_PREFIX distinto.`,
       );
     }
   }

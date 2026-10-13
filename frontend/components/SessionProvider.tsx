@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { usersApi, errorMessage } from '@/lib/api';
 import { canAccessDashboard, clearTokens, dashboardPathForRole, getAccessToken } from '@/lib/auth';
@@ -19,7 +19,7 @@ export function useSession() {
   return session;
 }
 
-export function SessionProvider({ children }: { children: ReactNode }) {
+export function SessionProvider({ children }: Readonly<{ children: ReactNode }>) {
   const router = useRouter();
   const pathname = usePathname();
   const [user, setUser] = useState<AuthenticatedUser | null>(null);
@@ -70,19 +70,22 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     if (user && !allowed && destination) router.replace(destination);
   }, [user, allowed, destination, router]);
 
-  if (loading) return <main className={styles.state} role="status">Carregando sua conta...</main>;
+  const logout = useCallback(() => {
+    clearTokens();
+    router.replace('/login');
+  }, [router]);
+  const session = useMemo(() => user ? { user, reloadUser, logout } : null, [user, reloadUser, logout]);
+
+  if (loading) return <main className={styles.state}><output>Carregando sua conta...</output></main>;
   if (error) return (
     <main className={styles.state}>
       <p role="alert">{error}</p>
       <button className={styles.primary} onClick={() => void load()}>Tentar novamente</button>
     </main>
   );
-  if (!user || !allowed) return <main className={styles.state} role="status">Redirecionando...</main>;
+  if (!user || !allowed) return <main className={styles.state}><output>Redirecionando...</output></main>;
   return (
-    <SessionContext.Provider value={{ user, reloadUser, logout: () => {
-      clearTokens();
-      router.replace('/login');
-    } }}>
+    <SessionContext.Provider value={session}>
       {children}
     </SessionContext.Provider>
   );

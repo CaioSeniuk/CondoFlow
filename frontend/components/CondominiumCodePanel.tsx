@@ -61,14 +61,14 @@ export function CondominiumCodePanel() {
     <p className={styles.muted}>Compartilhe apenas com moradores, porteiros e prestadores autorizados.
       O código vincula novas contas ao seu condomínio, sem permitir cadastro público de síndicos.</p>
     {code && <>
-      <label className={styles.field}>Código gerado
+      <label className={styles.field}><span>Código gerado</span>
         <input readOnly value={code} onFocus={(event) => event.target.select()} />
       </label>
       <p className={styles.muted}>Guarde este código agora. Ele não será exibido novamente ao sair desta tela.</p>
     </>}
-    {notice && <p className={styles.success} role="status">{notice}</p>}
+    {notice && <output className={styles.success}>{notice}</output>}
     {error && <p className={styles.error} role="alert">{error}</p>}
-    {busy && <p className={styles.muted} role="status">Carregando código...</p>}
+    {busy && <output className={styles.muted}>Carregando código...</output>}
     <div className={styles.actions}>
       <button className={styles.secondary} disabled={busy || !info} onClick={() => setConfirmation('generate')}>Gerar novo código</button>
       <button className={styles.danger} disabled={busy || !info?.codeEnabled} onClick={() => setConfirmation('revoke')}>Revogar código</button>

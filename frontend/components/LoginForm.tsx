@@ -68,7 +68,7 @@ export function LoginForm() {
   return (
     <form className={styles.card} onSubmit={handleSubmit} noValidate>
       <h1 className={styles.title}>Entrar</h1>
-      {checking && <p className={styles.label} role="status">Verificando sessão...</p>}
+      {checking && <output className={styles.label}>Verificando sessão...</output>}
 
       <div className={styles.field}>
         <label className={styles.label} htmlFor="identifier">

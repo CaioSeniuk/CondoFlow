@@ -9,6 +9,12 @@ export default function ProfilePage() {
   const { user, logout } = useSession();
   const name = [user.firstName, user.lastName].filter(Boolean).join(' ') || user.username;
   const initials = `${(user.firstName || user.username).slice(0, 1)}${user.lastName.slice(0, 1)}`.toUpperCase();
+  let guidance: React.ReactNode = 'Para atualizar seus dados, entre em contato com o síndico.';
+  if (user.isSuperuser) {
+    guidance = 'Esta conta administrativa é gerenciada pelo provisionamento do sistema.';
+  } else if (user.role === 'manager') {
+    guidance = <>Atualize seus dados na <Link href="/dashboard/users">gestão de usuários</Link>.</>;
+  }
   return <>
     <h1>Perfil</h1>
     <section className={styles.card} aria-label="Dados pessoais">
@@ -19,11 +25,7 @@ export default function ProfilePage() {
       </div>
       <UserDetails user={user} />
     </section>
-    <p className={styles.muted}>{user.isSuperuser
-      ? 'Esta conta administrativa é gerenciada pelo provisionamento do sistema.'
-      : user.role === 'manager'
-      ? <>Atualize seus dados na <Link href="/dashboard/users">gestão de usuários</Link>.</>
-      : 'Para atualizar seus dados, entre em contato com o síndico.'}</p>
+    <p className={styles.muted}>{guidance}</p>
     <button className={styles.danger} onClick={logout}>Sair da conta</button>
   </>;
 }

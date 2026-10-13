@@ -51,20 +51,20 @@ export function RegisterForm() {
     <Link className={formStyles.back} href="/login">← Voltar para entrar</Link>
     <h1>Criar conta</h1>
     {created ? <>
-      <p className={styles.success} role="status">Conta criada com sucesso! Entre com seu usuário e senha.</p>
+      <output className={styles.success}>Conta criada com sucesso! Entre com seu usuário e senha.</output>
       <p className={styles.muted}>Seu usuário: <strong>{input.username.trim()}</strong></p>
       <Link className={formStyles.submit} href="/login">Entrar na minha conta</Link>
     </> : <>
       <p className={styles.muted}>Solicite o código ao síndico. Sua conta ficará vinculada ao condomínio desse código.</p>
       <form onSubmit={submit} aria-busy={busy}>
-        <label className={styles.field}>Código do condomínio *
+        <label className={styles.field}><span>Código do condomínio *</span>
           <input required value={condominiumCode} onChange={(e) => setCondominiumCode(e.target.value)}
             disabled={busy} minLength={32} maxLength={32} pattern="[a-fA-F0-9]{32}"
             autoComplete="off" autoCapitalize="characters" spellCheck={false} />
         </label>
         <UserFields input={input} onChange={setInput} password={password}
           onPasswordChange={setPassword} disabled={busy} publicRegistration />
-        <label className={styles.field}>Confirmar senha *
+        <label className={styles.field}><span>Confirmar senha *</span>
           <input type="password" required minLength={8} autoComplete="new-password"
             value={confirmation} onChange={(e) => setConfirmation(e.target.value)} disabled={busy}
             aria-invalid={!!error && password !== confirmation}

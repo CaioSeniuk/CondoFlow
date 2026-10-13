@@ -17,7 +17,7 @@ import { ProvisionCondominiumDto } from './admin.dto';
 @UseGuards(AdminGuard)
 @Controller('api/v1/admin/condominiums')
 export class AdminController {
-  constructor(private service: AdminService) {}
+  constructor(private readonly service: AdminService) {}
 
   @Get()
   @ApiOperation({ summary: 'List condominiums. Global admin only.' })

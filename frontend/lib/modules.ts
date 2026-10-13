@@ -193,22 +193,33 @@ export function moduleFor(key: string): ModuleDefinition | undefined {
   return modules.find((item) => item.key === key);
 }
 
-export function visibleModules(role: UserRole, isSuperuser = false): ModuleDefinition[] {
-  return isSuperuser ? [] : modules.filter((item) => item.roles.includes(role));
+export function visibleModules(role: UserRole): ModuleDefinition[] {
+  return modules.filter((item) => item.roles.includes(role));
+}
+
+function objectLabel(value: object): string {
+  if ('name' in value && typeof value.name === 'string') return value.name;
+  if ('firstName' in value) {
+    const lastName = 'lastName' in value ? value.lastName : '';
+    return [value.firstName, lastName].filter((part) => typeof part === 'string' && part).join(' ');
+  }
+  return 'Não informado';
+}
+
+function dateLabel(text: string, key: string): string | null {
+  if (!/At$|Time$|From$|Until$|Month$/.test(key) || Number.isNaN(Date.parse(text))) return null;
+  return new Date(text).toLocaleString('pt-BR', {
+    dateStyle: 'short',
+    ...(key === 'referenceMonth' ? { timeZone: 'UTC' } : { timeStyle: 'short' }),
+  });
 }
 
 export function displayValue(value: unknown, key = ''): string {
   if (value === null || value === undefined || value === '') return 'Não informado';
   if (typeof value === 'boolean') return value ? 'Sim' : 'Não';
-  if (typeof value === 'object') {
-    if ('name' in value && typeof value.name === 'string') return value.name;
-    if ('firstName' in value) return [value.firstName, 'lastName' in value ? value.lastName : ''].filter(Boolean).join(' ');
-    return 'Não informado';
-  }
-  if (/Amount$/.test(key)) return Number(value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  if (typeof value === 'object') return objectLabel(value);
+  if (typeof value !== 'string' && typeof value !== 'number' && typeof value !== 'bigint') return 'Não informado';
+  if (key.endsWith('Amount')) return Number(value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   const text = String(value);
-  if (/At$|Time$|From$|Until$|Month$/.test(key) && !Number.isNaN(Date.parse(text))) {
-    return new Date(text).toLocaleString('pt-BR', { dateStyle: 'short', ...(key === 'referenceMonth' ? { timeZone: 'UTC' } : { timeStyle: 'short' }) });
-  }
-  return statusLabels[text] ?? text;
+  return dateLabel(text, key) ?? statusLabels[text] ?? text;
 }

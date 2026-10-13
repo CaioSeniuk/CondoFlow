@@ -9,6 +9,7 @@ let api;
 let auth;
 let store;
 let domain;
+let modules;
 
 beforeEach(() => {
   store = new Map();
@@ -39,6 +40,7 @@ beforeEach(() => {
   auth = load('auth');
   api = load('api');
   domain = load('domain-api');
+  modules = load('modules');
   auth.saveTokens({ access: 'old-access', refresh: 'old-refresh' });
 });
 
@@ -239,4 +241,14 @@ test('reference selectors retrieve all pages instead of dropping items after the
   assert.deepEqual(pages, [1, 2]);
   assert.equal(records.length, 21);
   assert.equal(records[20].id, '21');
+});
+
+test('display values guard object fields and preserve status, names and dates', () => {
+  assert.equal(modules.displayValue({ firstName: 'Ana', lastName: 'Silva' }), 'Ana Silva');
+  assert.equal(modules.displayValue({ firstName: {}, lastName: 'Silva' }), 'Silva');
+  assert.equal(modules.displayValue({ status: {} }), 'Não informado');
+  assert.equal(modules.displayValue({ name: 'Salão' }), 'Salão');
+  assert.equal(modules.displayValue('pending'), 'Aguardando retirada');
+  assert.match(modules.displayValue(123.45, 'totalAmount'), /123,45/);
+  assert.match(modules.displayValue('2027-01-01T00:00:00Z', 'referenceMonth'), /01\/01\/2027/);
 });

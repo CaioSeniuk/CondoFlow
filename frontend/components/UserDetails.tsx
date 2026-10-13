@@ -1,7 +1,7 @@
 import { ROLE_OPTIONS, type AuthenticatedUser } from '@/lib/types';
 import styles from './Workspace.module.css';
 
-export function UserDetails({ user }: { user: AuthenticatedUser }) {
+export function UserDetails({ user }: Readonly<{ user: AuthenticatedUser }>) {
   const fields = [
     ['Usuário', user.username],
     ['E-mail', user.email],

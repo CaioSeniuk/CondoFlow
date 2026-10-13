@@ -49,6 +49,11 @@ button {
   cursor: pointer;
 }
 
+output {
+  display: block;
+  margin-block: 1em;
+}
+
 a {
   color: inherit;
 }

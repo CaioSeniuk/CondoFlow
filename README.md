@@ -525,3 +525,5 @@ efêmero) e `build`, além de validar o build da imagem Docker. Depois de `prism
 a pipeline cria o índice de nomes de condomínios normalizados definido em
 `backend/prisma/condominium-code-display.sql`: índices de expressão não são representados
 no schema Prisma nem criados por `db push`. Nenhuma etapa conecta no Supabase real.
+Os comandos Prisma usam o executável instalado por `npm ci` e versionado no lockfile,
+sem baixar ou executar pacotes adicionais por `npx` durante a pipeline.

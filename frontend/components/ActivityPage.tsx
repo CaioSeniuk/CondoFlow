@@ -19,7 +19,7 @@ interface Activity {
   status: string;
 }
 
-export function ActivityPage({ history = false }: { history?: boolean }) {
+export function ActivityPage({ history = false }: Readonly<{ history?: boolean }>) {
   const { user } = useSession();
   const [items, setItems] = useState<Activity[] | null>(null);
   const [read, setRead] = useState<string[]>([]);
@@ -47,8 +47,10 @@ export function ActivityPage({ history = false }: { history?: boolean }) {
         const result = await listRecords(module.path);
         return result.results.map((record): Activity => {
           const date = record.updatedAt ?? record.registeredAt ?? record.createdAt ?? null;
+          const dateKey = typeof date === 'string' ? date : 'null';
+          const statusKey = typeof record.status === 'string' ? record.status : '';
           return {
-            key: `${module.key}:${record.id}:${String(date)}:${String(record.status ?? '')}`,
+            key: `${module.key}:${record.id}:${dateKey}:${statusKey}`,
             title: `${displayValue(record[module.titleKey])} · #${record.id}`,
             module: module.key, moduleTitle: module.title,
             date: typeof date === 'string' ? date : null,
@@ -82,7 +84,7 @@ export function ActivityPage({ history = false }: { history?: boolean }) {
     </div>
     {error && <p role="alert" className={styles.error}>{error}</p>}
     {readError && <p role="alert" className={styles.error}>{readError}</p>}
-    {!items && !error && <p role="status">Carregando atividades...</p>}
+    {!items && !error && <output>Carregando atividades...</output>}
     {filtered?.length === 0 && <p className={styles.card}>Nenhuma atividade encontrada.</p>}
     {filtered?.map((item) => <article key={item.key} className={styles.card}>
       <div className={styles.toolbar}><span className={styles.iconCircle}><ModuleIcon name={item.module} /></span>

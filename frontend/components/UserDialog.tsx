@@ -11,9 +11,9 @@ export type UserDialogAction =
   | { mode: 'create' }
   | { mode: 'edit' | 'details' | 'delete'; user: AuthenticatedUser };
 
-function Modal({ title, children, onClose, busy }: {
+function Modal({ title, children, onClose, busy }: Readonly<{
   title: string; children: ReactNode; onClose: () => void; busy: boolean;
-}) {
+}>) {
   const ref = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     const dialog = ref.current;
@@ -31,23 +31,29 @@ function Modal({ title, children, onClose, busy }: {
   </dialog>;
 }
 
-export function UserDialog({ action, onClose, onSaved }: {
-  action: UserDialogAction;
-  onClose: () => void;
-  onSaved: (message: string, userId?: string) => void;
-}) {
-  const original = action.mode === 'create' ? null : action.user;
-  const [input, setInput] = useState<UserInput>({
+function initialUserInput(original: AuthenticatedUser | null): UserInput {
+  return {
     username: original?.username ?? '', firstName: original?.firstName ?? '',
     lastName: original?.lastName ?? '', email: original?.email ?? '',
     role: original?.role ?? 'resident', block: original?.block ?? '',
     apartment: original?.apartment ?? '', phone: original?.phone ?? '',
-  });
+  };
+}
+
+export function UserDialog({ action, onClose, onSaved }: Readonly<{
+  action: UserDialogAction;
+  onClose: () => void;
+  onSaved: (message: string, userId?: string) => void;
+}>) {
+  const original = action.mode === 'create' ? null : action.user;
+  const [input, setInput] = useState<UserInput>(() => initialUserInput(original));
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const creating = action.mode === 'create';
   const title = { create: 'Novo usuário', edit: 'Editar usuário', details: 'Dados do usuário', delete: 'Excluir usuário' }[action.mode];
+  let submitLabel = action.mode === 'delete' ? 'Excluir usuário' : 'Salvar usuário';
+  if (busy) submitLabel = 'Salvando...';
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -85,7 +91,7 @@ export function UserDialog({ action, onClose, onSaved }: {
         <div className={styles.actions}>
           <button type="button" className={styles.secondary} onClick={onClose} disabled={busy}>Cancelar</button>
           <button type="submit" className={action.mode === 'delete' ? styles.danger : styles.primary} disabled={busy}>
-            {busy ? 'Salvando...' : action.mode === 'delete' ? 'Excluir usuário' : 'Salvar usuário'}
+            {submitLabel}
           </button>
         </div>
       </form>
