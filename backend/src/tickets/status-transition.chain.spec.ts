@@ -4,6 +4,7 @@ import { InvalidStatusTransitionError } from './tickets.errors';
 
 function ticket(status: TicketStatus, providerId: bigint | null = null): Ticket {
   return {
+    condominiumId: 1n,
     id: 1n,
     createdAt: new Date(),
     updatedAt: new Date(),
