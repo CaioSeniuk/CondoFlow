@@ -17,15 +17,11 @@ export class ReservationManager {
 
   // Registra a criação de uma reserva
   public registrarReserva(commonAreaId: bigint): void {
-    console.log(
-      `[Singleton] Reserva registrada para a área ${commonAreaId}`,
-    );
+    console.log(`[Singleton] Reserva registrada para a área ${commonAreaId}`);
   }
 
   // Registra o cancelamento de uma reserva
   public cancelarReserva(reservationId: bigint): void {
-    console.log(
-      `[Singleton] Reserva ${reservationId} cancelada`,
-    );
+    console.log(`[Singleton] Reserva ${reservationId} cancelada`);
   }
 }

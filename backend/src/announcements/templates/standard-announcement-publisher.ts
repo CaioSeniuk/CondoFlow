@@ -3,10 +3,7 @@ import { AnnouncementDraft } from './announcement.types';
 import { AnnouncementPublisherTemplate } from './announcement-publisher.template';
 
 export class StandardAnnouncementPublisher extends AnnouncementPublisherTemplate {
-  protected formatMessage(
-    draft: AnnouncementDraft,
-    _actor: AuthenticatedUser,
-  ): AnnouncementDraft {
+  protected formatMessage(draft: AnnouncementDraft, _actor: AuthenticatedUser): AnnouncementDraft {
     return {
       ...draft,
       title: draft.title.trim(),

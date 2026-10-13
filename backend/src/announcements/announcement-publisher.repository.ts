@@ -1,10 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { AnnouncementsRepository } from './announcements.repository';
-import {
-  Announcement,
-  AnnouncementDraft,
-  AnnouncementRepository,
-} from './templates';
+import { Announcement, AnnouncementRepository } from './templates';
 
 /**
  * Adaptador que conecta o `AnnouncementPublisherTemplate` (Template Method
