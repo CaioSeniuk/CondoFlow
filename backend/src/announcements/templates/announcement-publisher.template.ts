@@ -25,10 +25,7 @@ export abstract class AnnouncementPublisherTemplate {
     protected readonly visibilityChain: AnnouncementVisibilityChain,
   ) {}
 
-  async publish(
-    draft: AnnouncementDraft,
-    actor: AuthenticatedUser,
-  ): Promise<Announcement> {
+  async publish(draft: AnnouncementDraft, actor: AuthenticatedUser): Promise<Announcement> {
     await this.validateSegmentation(draft, actor);
     const formatted = await this.formatMessage(draft, actor);
     const saved = await this.save(formatted, actor);
@@ -52,10 +49,7 @@ export abstract class AnnouncementPublisherTemplate {
     actor: AuthenticatedUser,
   ): Promise<AnnouncementDraft> | AnnouncementDraft;
 
-  protected async save(
-    draft: AnnouncementDraft,
-    actor: AuthenticatedUser,
-  ): Promise<Announcement> {
+  protected async save(draft: AnnouncementDraft, actor: AuthenticatedUser): Promise<Announcement> {
     return this.repo.save({
       title: draft.title,
       body: draft.body,

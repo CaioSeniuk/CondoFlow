@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { AuthenticatedUser } from '../auth/authenticated-user.interface';
 import { PrismaAnnouncementRepository } from './announcement-publisher.repository';
 import { PrismaAnnouncementVisibilityChain } from './announcement-visibility.adapter';
@@ -30,11 +30,7 @@ export class AnnouncementPublisherService {
     };
   }
 
-  publish(
-    type: AnnouncementPublisherType,
-    draft: AnnouncementDraft,
-    actor: AuthenticatedUser,
-  ) {
+  publish(type: AnnouncementPublisherType, draft: AnnouncementDraft, actor: AuthenticatedUser) {
     return this.publishers[type].publish(draft, actor);
   }
 }

@@ -27,8 +27,5 @@ export interface AnnouncementRepository {
 }
 
 export interface AnnouncementVisibilityChain {
-  validate(
-    draft: AnnouncementDraft,
-    actor: AuthenticatedUser,
-  ): void | Promise<void>;
+  validate(draft: AnnouncementDraft, actor: AuthenticatedUser): void | Promise<void>;
 }
