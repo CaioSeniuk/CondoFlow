@@ -18,7 +18,7 @@ jobs:
   check:
     runs-on: ubuntu-latest
 
-    # Postgres efêmero, só para o teste de concorrência de reserva. Sem relação com
+    # Postgres efêmero para os testes de integração. Sem relação com
     # o Supabase real — a pipeline nunca lê nem escreve dados de usuário.
     services:
       postgres:
@@ -54,9 +54,9 @@ jobs:
 
       # Só gera o client a partir do schema versionado — a pipeline nunca conecta
       # no Supabase real nem lê dados de usuário.
-      - run: npx prisma@5.22.0 generate
+      - run: ./node_modules/.bin/prisma generate
 
-      - run: npx prisma@5.22.0 validate
+      - run: ./node_modules/.bin/prisma validate
         env:
           DIRECT_URL: ${{ env.TEST_DATABASE_URL }}
           DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
@@ -65,9 +65,20 @@ jobs:
 
       - run: npm run typecheck
 
-      # Cria o schema no Postgres efêmero para o teste de concorrência de reserva.
+      # Cria o schema no Postgres efêmero para os testes de integração.
       - name: Prepara o banco de teste
-        run: npx prisma@5.22.0 db push --skip-generate
+        run: ./node_modules/.bin/prisma db push --skip-generate
+        env:
+          DATABASE_URL: ${{ env.TEST_DATABASE_URL }}
+          DIRECT_URL: ${{ env.TEST_DATABASE_URL }}
+
+      # Prisma não representa índices de expressão; reproduz a restrição da migração SQL.
+      - name: Cria o índice de nomes normalizados
+        run: |
+          ./node_modules/.bin/prisma db execute --stdin --schema prisma/schema.prisma <<'SQL'
+          CREATE UNIQUE INDEX "condominiums_condominium_normalized_name_key"
+            ON "condominiums_condominium" (lower(regexp_replace(btrim("name"), '\s+', ' ', 'g')));
+          SQL
         env:
           DATABASE_URL: ${{ env.TEST_DATABASE_URL }}
           DIRECT_URL: ${{ env.TEST_DATABASE_URL }}
