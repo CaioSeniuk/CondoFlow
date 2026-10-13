@@ -7,74 +7,44 @@ import { AuthenticatedUser } from '../auth/authenticated-user.interface';
 
 import { PackagesRepository } from './packages.repository';
 
-import {
-  CreatePackageDto,
-  UpdatePackageDto,
-} from './dto/package.dto';
-
+import { CreatePackageDto, UpdatePackageDto } from './dto/package.dto';
 
 @Injectable()
 export class PackagesService {
-
   // Utiliza a mesma instância única do NotificationManager
-  private readonly notificationManager =
-    NotificationManager.getInstance();
+  private readonly notificationManager = NotificationManager.getInstance();
 
   constructor(private repo: PackagesRepository) {}
 
-
   listForUser(user: AuthenticatedUser) {
-
     if (user.role === UserRole.resident) {
-      return this.repo.filterByBlockApartment(
-        user.block,
-        user.apartment,
-      );
+      return this.repo.filterByBlockApartment(user.block, user.apartment);
     }
 
-    if (
-      user.role === UserRole.manager ||
-      user.role === UserRole.doorman
-    ) {
+    if (user.role === UserRole.manager || user.role === UserRole.doorman) {
       return this.repo.all();
     }
 
     return Promise.resolve([]);
   }
 
-
   /**
    * Morador só pode visualizar encomendas
    * pertencentes ao próprio apartamento.
    */
-  private canAccess(
-    pkg: Package,
-    user: AuthenticatedUser,
-  ): boolean {
-
-    if (
-      user.role === UserRole.manager ||
-      user.role === UserRole.doorman
-    ) {
+  private canAccess(pkg: Package, user: AuthenticatedUser): boolean {
+    if (user.role === UserRole.manager || user.role === UserRole.doorman) {
       return true;
     }
 
     if (user.role === UserRole.resident) {
-      return (
-        pkg.block === user.block &&
-        pkg.apartment === user.apartment
-      );
+      return pkg.block === user.block && pkg.apartment === user.apartment;
     }
 
     return false;
   }
 
-
-  async findByIdForUser(
-    id: bigint,
-    user: AuthenticatedUser,
-  ): Promise<Package | null> {
-
+  async findByIdForUser(id: bigint, user: AuthenticatedUser): Promise<Package | null> {
     const pkg = await this.repo.findById(id);
 
     if (!pkg || !this.canAccess(pkg, user)) {
@@ -84,13 +54,7 @@ export class PackagesService {
     return pkg;
   }
 
-
-  async create(
-    dto: CreatePackageDto,
-    photoUrl: string,
-    user: AuthenticatedUser,
-  ) {
-
+  async create(dto: CreatePackageDto, photoUrl: string, user: AuthenticatedUser) {
     const pkg = await this.repo.create({
       ...dto,
       photo: photoUrl,
@@ -109,31 +73,18 @@ export class PackagesService {
     return pkg;
   }
 
-
-  update(
-    id: bigint,
-    dto: UpdatePackageDto,
-    user: AuthenticatedUser,
-  ) {
-
+  update(id: bigint, dto: UpdatePackageDto, user: AuthenticatedUser) {
     return this.repo.update(id, {
       ...dto,
       ...auditOnUpdate(user),
     });
   }
 
-
   remove(id: bigint) {
     return this.repo.remove(id);
   }
 
-
-  async pickup(
-    id: bigint,
-    pickedUpBy: string,
-    actor: AuthenticatedUser,
-  ) {
-
+  async pickup(id: bigint, pickedUpBy: string, actor: AuthenticatedUser) {
     const pkg = await this.repo.update(id, {
       status: PackageStatus.picked_up,
       pickedUpAt: new Date(),
@@ -146,9 +97,7 @@ export class PackagesService {
      * SINGLETON
      * Notifica que a encomenda foi retirada.
      */
-    this.notificationManager.enviarNotificacao(
-      `Encomenda ${id} retirada por ${pickedUpBy}.`,
-    );
+    this.notificationManager.enviarNotificacao(`Encomenda ${id} retirada por ${pickedUpBy}.`);
 
     return pkg;
   }

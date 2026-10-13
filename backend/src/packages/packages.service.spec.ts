@@ -4,6 +4,7 @@ import { PackagesRepository } from './packages.repository';
 import { AuthenticatedUser } from '../auth/authenticated-user.interface';
 
 const resident: AuthenticatedUser = {
+  condominiumId: 1n,
   id: 1n,
   username: 'resident1',
   role: UserRole.resident,
@@ -11,6 +12,7 @@ const resident: AuthenticatedUser = {
   apartment: '101',
 };
 const doorman: AuthenticatedUser = {
+  condominiumId: 1n,
   id: 2n,
   username: 'doorman1',
   role: UserRole.doorman,
