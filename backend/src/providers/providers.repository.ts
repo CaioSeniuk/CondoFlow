@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { tenantCreate } from '../common/condominium-context';
 
 @Injectable()
 export class ProvidersRepository {
@@ -22,8 +23,8 @@ export class ProvidersRepository {
     return this.prisma.provider.findFirst({ where: { id, userId } });
   }
 
-  create(data: Prisma.ProviderUncheckedCreateInput) {
-    return this.prisma.provider.create({ data });
+  create(data: Omit<Prisma.ProviderUncheckedCreateInput, 'condominiumId'>) {
+    return this.prisma.provider.create({ data: tenantCreate(data) });
   }
 
   update(id: bigint, data: Prisma.ProviderUncheckedUpdateInput) {
