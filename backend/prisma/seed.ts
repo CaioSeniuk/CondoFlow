@@ -13,12 +13,32 @@ async function main() {
   }
 
   const password = await bcrypt.hash(SEED_PASSWORD, BCRYPT_ROUNDS);
-
-  const sindico = await prisma.user.upsert({
-    where: { username: 'sindico' },
+  const condominiumId = BigInt(process.env.SEED_CONDOMINIUM_ID ?? '1');
+  const prefix = process.env.SEED_USER_PREFIX ?? '';
+  const condominium = await prisma.condominium.upsert({
+    where: { id: condominiumId },
     update: {},
     create: {
-      username: 'sindico',
+      id: condominiumId,
+      name: process.env.SEED_CONDOMINIUM_NAME ?? 'Condomínio CondoFlow',
+    },
+  });
+  const usernames = ['sindico', 'morador', 'porteiro', 'prestador'].map((name) => `${prefix}${name}`);
+  const existingUsers = await prisma.user.findMany({ where: { username: { in: usernames } } });
+  for (const existing of existingUsers) {
+    if (existing.condominiumId !== condominium.id) {
+      throw new Error(
+        `O usuário ${existing.username} pertence a outro condomínio. Use SEED_USER_PREFIX distinto.`,
+      );
+    }
+  }
+
+  const sindico = await prisma.user.upsert({
+    where: { username: `${prefix}sindico` },
+    update: {},
+    create: {
+      username: `${prefix}sindico`,
+      condominiumId,
       password,
       firstName: 'Helena',
       lastName: 'Síndica',
@@ -31,10 +51,11 @@ async function main() {
   });
 
   await prisma.user.upsert({
-    where: { username: 'morador' },
+    where: { username: `${prefix}morador` },
     update: {},
     create: {
-      username: 'morador',
+      username: `${prefix}morador`,
+      condominiumId,
       password,
       firstName: 'Lucas',
       lastName: 'Morador',
@@ -46,10 +67,11 @@ async function main() {
   });
 
   await prisma.user.upsert({
-    where: { username: 'porteiro' },
+    where: { username: `${prefix}porteiro` },
     update: {},
     create: {
-      username: 'porteiro',
+      username: `${prefix}porteiro`,
+      condominiumId,
       password,
       firstName: 'Ricardo',
       lastName: 'Porteiro',
@@ -62,10 +84,11 @@ async function main() {
   });
 
   const prestadorUser = await prisma.user.upsert({
-    where: { username: 'prestador' },
+    where: { username: `${prefix}prestador` },
     update: {},
     create: {
-      username: 'prestador',
+      username: `${prefix}prestador`,
+      condominiumId,
       password,
       firstName: 'Marcos',
       lastName: 'Prestador',
@@ -81,6 +104,7 @@ async function main() {
     update: {},
     create: {
       name: 'Marcos Manutenção Predial',
+      condominiumId,
       contractNumber: 'CT-0001',
       contact: '(41) 99999-0000',
       userId: prestadorUser.id,
@@ -89,7 +113,7 @@ async function main() {
   });
 
   console.log('Seed concluída. Usuários criados (senha para todos: valor de SEED_PASSWORD):');
-  console.log('  sindico / morador / porteiro / prestador');
+  console.log(`  ${prefix}sindico / ${prefix}morador / ${prefix}porteiro / ${prefix}prestador`);
 }
 
 main()
