@@ -6,6 +6,7 @@ import { AppModule } from './app.module';
 import { PrismaService } from './prisma/prisma.service';
 
 const manager = {
+  condominiumId: 1n,
   id: 1n,
   username: 'manager1',
   role: 'manager',
