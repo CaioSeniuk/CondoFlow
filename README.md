@@ -520,6 +520,8 @@ e re-hasheada para bcrypt no primeiro login bem-sucedido.
 ## CI
 
 `.github/workflows/backend-ci.yml` roda em push/PR que alterem `backend/**`: `npm ci`,
-`prisma generate`/`validate`, `lint:check`, `typecheck`, testes (com Postgres 16 efêmero para o
-teste de concorrência) e `build`, além de validar o build da imagem Docker. Nenhuma etapa conecta
-no Supabase real.
+`prisma generate`/`validate`, `lint:check`, `typecheck`, testes de integração (com Postgres 16
+efêmero) e `build`, além de validar o build da imagem Docker. Depois de `prisma db push`,
+a pipeline cria o índice de nomes de condomínios normalizados definido em
+`backend/prisma/condominium-code-display.sql`: índices de expressão não são representados
+no schema Prisma nem criados por `db push`. Nenhuma etapa conecta no Supabase real.
