@@ -10,11 +10,18 @@ export class CondominiumsService {
   async me() {
     const condominium = await this.prisma.condominium.findUniqueOrThrow({
       where: { id: requireCondominiumId() },
-      select: { id: true, name: true, registrationCodeHash: true, codeUpdatedAt: true },
+      select: {
+        id: true,
+        name: true,
+        productPlan: true,
+        registrationCodeHash: true,
+        codeUpdatedAt: true,
+      },
     });
     return {
       id: condominium.id,
       name: condominium.name,
+      productPlan: condominium.productPlan,
       codeEnabled: condominium.registrationCodeHash !== null,
       codeUpdatedAt: condominium.codeUpdatedAt,
     };

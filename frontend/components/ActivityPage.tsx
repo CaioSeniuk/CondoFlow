@@ -41,7 +41,7 @@ export function ActivityPage({ history = false }: Readonly<{ history?: boolean }
   const load = useCallback(async () => {
     const current = ++requestId.current;
     try {
-      const resources = visibleModules(user.role).filter((module) =>
+      const resources = visibleModules(user.role, user.condominium?.productPlan).filter((module) =>
         ['announcements', 'packages', 'tickets', 'reservations', 'access-logs', 'evidences'].includes(module.key));
       const sources = await Promise.all(resources.map(async (module) => {
         const result = await listRecords(module.path);
@@ -62,7 +62,7 @@ export function ActivityPage({ history = false }: Readonly<{ history?: boolean }
       setItems(sources.flat().sort((a, b) => (Date.parse(b.date ?? '') || 0) - (Date.parse(a.date ?? '') || 0)));
       setError(null);
     } catch (err) { if (current === requestId.current) setError(errorMessage(err)); }
-  }, [user.role]);
+  }, [user.role, user.condominium?.productPlan]);
   useEffect(() => { void load(); return () => { requestId.current++; }; }, [load]);
   useAutoRefresh(load);
 

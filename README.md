@@ -17,6 +17,7 @@ planilhas manuais por uma experiência digital única.
   - [Chain of Responsibility](#1-chain-of-responsibility)
   - [Template Method](#2-template-method)
   - [Singleton](#3-singleton)
+- [Variabilidade LPS](#variabilidade-lps)
 - [Como rodar](#como-rodar)
   - [Backend (Docker)](#backend-docker--recomendado)
   - [Backend (local)](#backend-local-requer-node-26)
@@ -272,6 +273,80 @@ seguido das linhas `[Notificação] ...` / `[Singleton] Reserva ...` a cada oper
 > Observação: providers do NestJS já são singletons por padrão via injeção de dependência; aqui o
 > padrão foi implementado manualmente (fora do container de DI) para fins didáticos. O histórico de
 > notificações fica apenas em memória e é perdido ao reiniciar o processo.
+
+## Variabilidade LPS
+
+A linha de produtos compartilha o mesmo código e banco, mas deriva **dois produtos por
+condomínio**, selecionados pelo administrador global. A seleção não é um perfil de usuário:
+as permissões de morador, síndico, porteiro e prestador continuam obrigatórias dentro do produto.
+
+| Feature | Essencial | Completo | Regra de variabilidade |
+|---|---|---|---|
+| Autenticação, usuários, condomínios e comunicados | Sim | Sim | Núcleo obrigatório |
+| Encomendas, visitantes e controle de acesso | Sim | Sim | Núcleo obrigatório |
+| Chamados, prestadores e evidências | Sim | Sim | Núcleo obrigatório |
+| Reservas e áreas comuns | Não | Sim | Feature opcional; áreas comuns fazem parte de reservas |
+| Enquetes e votos | Não | Sim | Feature opcional; votos dependem das enquetes |
+| Financeiro, categorias e relatórios | Não | Sim | Feature opcional; categorias/relatórios dependem do financeiro |
+| Notificações e histórico | Sim | Sim | Agregam somente módulos habilitados e autorizados |
+
+**Planejamento:** o ponto de variação é o conjunto de módulos opcionais; suas variantes são
+os produtos `essential` e `complete`. Neste exemplo, as três features opcionais são
+comercializadas como um único pacote: todas ausentes no Essencial e todas presentes no
+Completo. Não são permitidas combinações independentes. A ligação da variante ocorre
+**em tempo de execução**, por `Condominium.productPlan`, persistido no PostgreSQL.
+
+**Exemplo de derivação:** um condomínio que precisa de comunicação, portaria e manutenção
+usa o Essencial, reutilizando o núcleo. Outro que também precisa de reservas, votações e
+controle financeiro usa o Completo, sem duplicação do sistema.
+
+### Selecionar e demonstrar o produto
+
+Antes de iniciar esta versão em um banco existente, faça backup, revise e aplique
+`backend/prisma/lps-product-plan.sql`, após os scripts de condomínio já documentados.
+O script é transacional e **não idempotente**. Ele adiciona o enum e a coluna com padrão
+`complete`, preservando todas as funcionalidades dos condomínios existentes. Para um
+banco vazio e descartável, o schema Prisma já contém essa estrutura.
+
+1. Execute `npm run prisma:generate` em `backend` e inicie a aplicação.
+2. Entre como administrador global em `/dashboard/admin`. Ao criar um condomínio, selecione
+   **Produto LPS: Essencial** ou **Completo**.
+3. Para um condomínio existente, use **Alterar produto**, confirme e entre com uma conta
+   pertencente a ele. O produto aparece junto ao nome do condomínio.
+4. No Essencial, reservas/áreas comuns, enquetes e financeiro/categorias não aparecem na
+   navegação, atalhos, resumos ou atividades. Acesso direto a essas telas redireciona ao
+   dashboard do perfil. A API retorna **403**, mesmo com token válido e perfil de síndico.
+5. Ao mudar para Completo, as features voltam a ficar disponíveis conforme o perfil.
+   Alterar o produto **não exclui dados**; um retorno ao Completo recupera o acesso aos
+   registros anteriores. A API consulta a seleção em cada requisição; a interface atualiza
+   a sessão a cada 15 segundos quando visível, ao recuperar foco ou ao recarregar.
+
+Contratos da API (apenas administrador global):
+
+```http
+POST /api/v1/admin/condominiums
+Content-Type: application/json
+
+{"name":"Condomínio Essencial","productPlan":"essential"}
+```
+
+```http
+PATCH /api/v1/admin/condominiums/1/product-plan
+Content-Type: application/json
+
+{"productPlan":"complete"}
+```
+
+Omitir o produto na criação mantém `complete` por compatibilidade. Valores diferentes
+de `essential`/`complete` e campos adicionais são rejeitados. A resposta de `/users/me`
+inclui `condominium.productPlan`; `/condominiums/me` e a listagem administrativa também
+retornam o produto, sem permitir que usuários comuns alterem a seleção.
+
+Implementação: `common/product-features.ts` define as features; o `ProductFeatureGuard`
+global bloqueia todas as operações dos módulos opcionais, incluindo sub-recursos e
+relatórios, após a autenticação. `frontend/lib/modules.ts` deriva a interface e
+`frontend/lib/auth.ts` valida as URLs. Testes cobrem os dois produtos, mudanças de seleção,
+isolamento da configuração por condomínio e preservação das permissões por perfil.
 
 ## Como rodar
 

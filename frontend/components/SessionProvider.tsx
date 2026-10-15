@@ -2,9 +2,10 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { usersApi, errorMessage } from '@/lib/api';
+import { ApiError, usersApi, errorMessage } from '@/lib/api';
 import { canAccessDashboard, clearTokens, dashboardPathForRole, getAccessToken } from '@/lib/auth';
 import type { AuthenticatedUser } from '@/lib/types';
+import { useAutoRefresh } from '@/lib/useAutoRefresh';
 import styles from './Workspace.module.css';
 
 const SessionContext = createContext<{
@@ -27,6 +28,9 @@ export function SessionProvider({ children }: Readonly<{ children: ReactNode }>)
   const [loading, setLoading] = useState(true);
   const reloadUser = useCallback(async () => {
     const me = await usersApi.me();
+    if (!me.condominium || !['essential', 'complete'].includes(me.condominium.productPlan)) {
+      throw new ApiError(502, 'Não foi possível carregar a configuração do produto do condomínio.');
+    }
     if (getAccessToken()) setUser(me);
   }, []);
   const load = useCallback(async () => {
@@ -63,9 +67,14 @@ export function SessionProvider({ children }: Readonly<{ children: ReactNode }>)
       window.removeEventListener('condoflow-session', checkSession);
     };
   }, [load, router]);
+  const refreshSession = useCallback(async () => {
+    try { await reloadUser(); }
+    catch (err) { setError(errorMessage(err)); }
+  }, [reloadUser]);
+  useAutoRefresh(refreshSession, !!user && !loading && !error);
 
   const destination = user ? dashboardPathForRole(user.role, user.isSuperuser) : null;
-  const allowed = !!user && canAccessDashboard(pathname, user.role, user.isSuperuser);
+  const allowed = !!user && canAccessDashboard(pathname, user.role, user.isSuperuser, user.condominium?.productPlan);
   useEffect(() => {
     if (user && !allowed && destination) router.replace(destination);
   }, [user, allowed, destination, router]);

@@ -3,12 +3,14 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { adminApi, errorMessage } from '@/lib/api';
 import type { AdminCondominium, PaginatedResult, ProvisionCondominiumInput } from '@/lib/types';
+import { productPlanLabels } from '@/lib/types';
 import styles from '@/components/Workspace.module.css';
 import { ConfirmationDialog } from '@/components/ConfirmationDialog';
 import { useAutoRefresh } from '@/lib/useAutoRefresh';
 
 const empty: ProvisionCondominiumInput = {
   name: '',
+  productPlan: 'complete',
 };
 
 export default function AdminPage() {
@@ -20,7 +22,7 @@ export default function AdminPage() {
   const [result, setResult] = useState<{ name: string; code: string } | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [confirmation, setConfirmation] = useState<{
-    item: AdminCondominium; mode: 'generate' | 'revoke' | 'delete';
+    item: AdminCondominium; mode: 'generate' | 'revoke' | 'delete' | 'plan';
   } | null>(null);
   const requestId = useRef(0);
   const load = useCallback(async () => {
@@ -42,7 +44,7 @@ export default function AdminPage() {
     event.preventDefault();
     setBusy(true); setError(null); setNotice(null); setResult(null);
     try {
-      const created = await adminApi.provision({ name: input.name.trim() });
+      const created = await adminApi.provision({ ...input, name: input.name.trim() });
       setResult(created);
       setNotice('Condomínio criado e código gerado. O código é reutilizável e não expira.');
       setInput(empty);
@@ -78,6 +80,17 @@ export default function AdminPage() {
     finally { setBusy(false); }
   }
 
+  async function changePlan(item: AdminCondominium) {
+    setBusy(true); setError(null); setNotice(null);
+    try {
+      const plan = item.productPlan === 'complete' ? 'essential' : 'complete';
+      await adminApi.updateProductPlan(item.id, plan);
+      setNotice(`Produto de ${item.name} alterado para ${productPlanLabels[plan]}. Dados existentes preservados.`);
+      await load();
+    } catch (err) { setError(errorMessage(err)); }
+    finally { setBusy(false); }
+  }
+
   let confirmationMessage = '';
   if (confirmation) {
     const { item, mode } = confirmation;
@@ -85,6 +98,10 @@ export default function AdminPage() {
     confirmationMessage = `${verb} o código de ${item.name}? O código anterior deixará de funcionar.`;
     if (mode === 'delete') {
       confirmationMessage = `Excluir definitivamente o condomínio ${item.name}? Seu código deixará de funcionar. Esta ação não pode ser desfeita.`;
+    }
+    if (mode === 'plan') {
+      const plan = item.productPlan === 'complete' ? 'essential' : 'complete';
+      confirmationMessage = `Alterar ${item.name} para o produto ${productPlanLabels[plan]}? O Essencial não permite reservas, enquetes ou financeiro. Os dados são preservados e voltam a ficar acessíveis no Completo.`;
     }
   }
 
@@ -108,8 +125,17 @@ export default function AdminPage() {
           <div className={styles.fields}>
             <label className={styles.field}><span>Nome do condomínio</span>
               <input value={input.name} required minLength={1} maxLength={150}
-                onChange={(event) => setInput({ name: event.target.value })} />
+                onChange={(event) => setInput({ ...input, name: event.target.value })} />
             </label>
+            <div className={styles.field}>
+              <label htmlFor="product-plan">Produto LPS</label>
+              <select id="product-plan" value={input.productPlan} onChange={(event) =>
+                setInput({ ...input, productPlan: event.target.value === 'essential' ? 'essential' : 'complete' })}>
+                <option value="essential">Essencial</option>
+                <option value="complete">Completo</option>
+              </select>
+            </div>
+            <p className={styles.muted}>O Completo acrescenta reservas, enquetes e financeiro ao núcleo compartilhado.</p>
           </div>
           <button type="submit" className={styles.primary}>Criar condomínio e gerar código</button>
         </fieldset>
@@ -118,6 +144,7 @@ export default function AdminPage() {
     {!data && !error && <output>Carregando condomínios...</output>}
     {data?.results.map((item) => <article key={item.id} className={styles.card}>
       <h2>{item.name}</h2>
+      <p>Produto: {productPlanLabels[item.productPlan]}</p>
       {item.registrationCode ? <label className={styles.field}><span>Código de cadastro de {item.name}</span>
         <input readOnly value={item.registrationCode} onFocus={(event) => event.target.select()} />
       </label> : <p className={styles.muted}>{item.codeUpdatedAt
@@ -125,6 +152,9 @@ export default function AdminPage() {
         : 'Nenhum código gerado.'}</p>}
       <p className={styles.muted}>Códigos gerados não expiram. Gerar outro substitui o anterior.</p>
       <div className={styles.actions}>
+        <button className={styles.secondary} disabled={busy} onClick={() => setConfirmation({ item, mode: 'plan' })}>
+          Alterar produto de {item.name}
+        </button>
         <button className={styles.secondary} disabled={busy} onClick={() => setConfirmation({ item, mode: 'generate' })}>Gerar código para {item.name}</button>
         <button className={styles.danger} disabled={busy} onClick={() => setConfirmation({ item, mode: 'revoke' })}>Revogar código de {item.name}</button>
         <button className={styles.danger} disabled={busy} onClick={() => setConfirmation({ item, mode: 'delete' })}>Excluir condomínio {item.name}</button>
@@ -137,13 +167,13 @@ export default function AdminPage() {
     </div>}
     {error && <button className={styles.secondary} disabled={busy} onClick={() => void load()}>Tentar novamente</button>}
     {confirmation && <ConfirmationDialog
-      title={{ generate: 'Gerar novo código', revoke: 'Revogar código', delete: 'Excluir condomínio' }[confirmation.mode]}
+      title={{ generate: 'Gerar novo código', revoke: 'Revogar código', delete: 'Excluir condomínio', plan: 'Alterar produto LPS' }[confirmation.mode]}
       message={confirmationMessage}
-      confirmLabel={{ generate: 'Confirmar geração', revoke: 'Confirmar revogação', delete: 'Confirmar exclusão' }[confirmation.mode]}
+      confirmLabel={{ generate: 'Confirmar geração', revoke: 'Confirmar revogação', delete: 'Confirmar exclusão', plan: 'Confirmar alteração' }[confirmation.mode]}
       busy={busy} onClose={() => setConfirmation(null)}
       onConfirm={() => {
-        const action = confirmation.mode === 'delete'
-          ? remove(confirmation.item) : change(confirmation.item, confirmation.mode === 'revoke');
+        const action = confirmation.mode === 'plan' ? changePlan(confirmation.item)
+          : confirmation.mode === 'delete' ? remove(confirmation.item) : change(confirmation.item, confirmation.mode === 'revoke');
         void action.finally(() => setConfirmation(null));
       }} />}
   </>;

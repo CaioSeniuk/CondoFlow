@@ -63,6 +63,34 @@ test('each role accesses its home and profile, only manager accesses users', () 
   assert.equal(auth.canAccessDashboard('/dashboard/admin', 'manager', true), true);
 });
 
+test('LPS filters optional screens and direct/nested URLs without overriding role permissions', () => {
+  const optional = ['reservations', 'common-areas', 'polls', 'finance', 'categories'];
+  for (const key of optional) {
+    assert.equal(modules.moduleEnabled(key, 'essential'), false);
+    assert.equal(modules.moduleEnabled(key, 'complete'), true);
+    assert.equal(auth.canAccessDashboard(`/dashboard/${key}`, 'manager', false, 'essential'), false);
+    assert.equal(auth.canAccessDashboard(`/dashboard/${key}/1`, 'manager', false, 'essential'), false);
+    assert.equal(auth.canAccessDashboard(`/dashboard/${key}`, 'manager', false, 'complete'), true);
+  }
+  for (const role of ['resident', 'manager', 'doorman', 'provider']) {
+    assert.equal(modules.visibleModules(role, 'essential').some((item) => optional.includes(item.key)), false);
+    assert.equal(auth.canAccessDashboard(`/dashboard/${role}`, role, false, 'essential'), true);
+    assert.equal(auth.canAccessDashboard('/dashboard/announcements', role, false, 'essential'), true);
+  }
+  assert.equal(auth.canAccessDashboard('/dashboard/finance', 'provider', false, 'complete'), false);
+  assert.equal(auth.canAccessDashboard('/dashboard/admin', 'manager', true, 'essential'), true);
+});
+
+test('admin product selection uses PATCH and sends only the selected plan', async () => {
+  global.fetch = async (url, init) => {
+    assert.ok(url.endsWith('/admin/condominiums/9/product-plan'));
+    assert.equal(init.method, 'PATCH');
+    assert.deepEqual(JSON.parse(init.body), { productPlan: 'essential' });
+    return json({ id: '9', name: 'Example', productPlan: 'essential' });
+  };
+  assert.equal((await api.adminApi.updateProductPlan('9', 'essential')).productPlan, 'essential');
+});
+
 test('login sends username, maps invalid credentials and does not save failed tokens', async () => {
   global.fetch = async (url, init) => {
     assert.ok(url.endsWith('/api/v1/token'));

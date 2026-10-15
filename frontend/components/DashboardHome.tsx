@@ -62,20 +62,21 @@ export function DashboardHome() {
     const current = ++requestId.current;
     const keys = summaryKeys[user.role];
     try {
-      const sources = visibleModules(user.role).filter((item) => keys.includes(item.key));
+      const sources = visibleModules(user.role, user.condominium?.productPlan).filter((item) => keys.includes(item.key));
       const entries = await Promise.all(sources.map(async (item) => [item.key, await allRecords(item.path)] as const));
       if (current === requestId.current) { setRecords(Object.fromEntries(entries)); setError(null); }
     } catch (err) { if (current === requestId.current) setError(errorMessage(err)); }
-  }, [user.role]);
+  }, [user.role, user.condominium?.productPlan]);
   useEffect(() => { void load(); return () => { requestId.current++; }; }, [load]);
   useAutoRefresh(load);
-  const stats = summaryStats(user.role, records);
+  const stats = summaryStats(user.role, records).filter(([title]) =>
+    title !== 'Reservas' || user.condominium?.productPlan !== 'essential');
   const recentKey = recentKeys[user.role];
   const recent = records?.[recentKey]?.slice(0, 3);
   const primaryKeys = shortcutKeys[user.role];
-  const primary = primaryKeys.map((key) => visibleModules(user.role).find((item) => item.key === key))
+  const primary = primaryKeys.map((key) => visibleModules(user.role, user.condominium?.productPlan).find((item) => item.key === key))
     .filter((item) => item !== undefined);
-  const others = visibleModules(user.role).filter((item) => !primaryKeys.includes(item.key));
+  const others = visibleModules(user.role, user.condominium?.productPlan).filter((item) => !primaryKeys.includes(item.key));
   return <>
     <h1>Área do {label}</h1>
     <p className={styles.muted}>{new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}</p>

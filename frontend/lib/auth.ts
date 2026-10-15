@@ -1,5 +1,5 @@
-import type { TokenPairResponse, UserRole } from './types';
-import { moduleFor } from './modules';
+import type { ProductPlan, TokenPairResponse, UserRole } from './types';
+import { moduleEnabled, moduleFor } from './modules';
 
 const ACCESS_KEY = 'condoflow_access_token';
 const REFRESH_KEY = 'condoflow_refresh_token';
@@ -32,13 +32,13 @@ export function dashboardPathForRole(role: UserRole, isSuperuser = false): strin
   return `/dashboard/${role}`;
 }
 
-export function canAccessDashboard(pathname: string, role: UserRole, isSuperuser = false): boolean {
+export function canAccessDashboard(pathname: string, role: UserRole, isSuperuser = false, plan: ProductPlan = 'complete'): boolean {
   const home = dashboardPathForRole(role, isSuperuser);
   const [, dashboard, moduleKey, id, ...rest] = pathname.split('/');
   const module = dashboard === 'dashboard' && !rest.length && (!id || /^\d+$/.test(id))
     ? moduleFor(moduleKey) : undefined;
   return pathname === '/dashboard/profile' ||
-    (!isSuperuser && !!module && module.roles.includes(role)) ||
+    (!isSuperuser && !!module && module.roles.includes(role) && moduleEnabled(module.key, plan)) ||
     (pathname === '/dashboard/users' && role === 'manager') ||
     pathname === home || pathname.startsWith(`${home}/`);
 }
