@@ -83,11 +83,26 @@ Três exemplos foram portados, um por módulo:
   `AnnouncementPublisherController`/`AnnouncementPublisherService` novos —
   não substitui o CRUD existente de comunicados.
 
+## Integração com a variabilidade LPS
+
+Os três exemplos reutilizam a mesma implementação nos produtos Essencial e Completo.
+Chamados e comunicados pertencem ao núcleo obrigatório, portanto seus Template Methods
+permanecem disponíveis nos dois produtos, conforme as permissões existentes.
+
+O financeiro é opcional e está incluído somente no Completo. O `ProductFeatureGuard`
+global bloqueia `POST /api/v1/finance/reports/:type` com `403 Forbidden` no Essencial,
+antes de executar o template. No Completo, `FinancialReportTemplate` continua verificando
+a permissão de síndico antes de gerar o relatório. A seleção de produto não substitui
+a autorização por perfil nem muda o algoritmo dos relatórios.
+
+Consulte a seção [Variabilidade LPS](../../README.md#variabilidade-lps) para o planejamento,
+as regras de derivação, a migração e o roteiro de demonstração.
+
 ## Decisões e limitações assumidas
 
-- Os novos endpoints são protegidos apenas pelo `JwtAuthGuard` global (já
-  registrado em `app.module.ts`); não há guard de papel adicional. No caso
-  de finance, a checagem de permissão de manager é feita dentro do próprio
+- Os novos endpoints exigem autenticação pelo `JwtAuthGuard` global.
+  O `ProductFeatureGuard` também exige o produto Completo nas rotas financeiras.
+  No caso de finance, a checagem de permissão de manager é feita dentro do próprio
   template (`hasManagerPermission`).
 - A restrição de `audience` a apenas `'all'` em announcements é
   deliberada: o schema atual não tem um conceito de audiência por papel de

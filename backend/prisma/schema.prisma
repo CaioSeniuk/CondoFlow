@@ -20,9 +20,15 @@ enum UserRole {
   provider
 }
 
+enum ProductPlan {
+  essential
+  complete
+}
+
 model Condominium {
   id                   BigInt            @id @default(autoincrement())
   name                 String            @unique
+  productPlan          ProductPlan       @default(complete) @map("product_plan")
   registrationCode     String?           @map("registration_code")
   registrationCodeHash String?           @unique @map("registration_code_hash")
   codeUpdatedAt        DateTime?         @map("code_updated_at")

@@ -21,6 +21,7 @@ import { FinanceModule } from './finance/finance.module';
 import { CondominiumInterceptor } from './common/condominium.interceptor';
 import { CondominiumsModule } from './condominiums/condominiums.module';
 import { AdminModule } from './admin/admin.module';
+import { ProductFeatureGuard } from './common/product-feature.guard';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { AdminModule } from './admin/admin.module';
   ],
   providers: [
     { provide: APP_GUARD, useClass: JwtAuthGuard },
+    { provide: APP_GUARD, useClass: ProductFeatureGuard },
     { provide: APP_PIPE, useClass: ZodValidationPipe },
     { provide: APP_INTERCEPTOR, useClass: PaginationInterceptor },
     { provide: APP_INTERCEPTOR, useClass: CondominiumInterceptor },

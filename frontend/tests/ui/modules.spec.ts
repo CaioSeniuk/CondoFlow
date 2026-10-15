@@ -42,6 +42,7 @@ async function setup(page: Page, role: UserRole, target: ModuleDefinition) {
     if (method === 'OPTIONS') return send({});
     if (path === '/users/me') return send({
       id: '1', condominiumId: '1', username: role, firstName: 'Ana', lastName: 'Silva',
+      condominium: { id: '1', name: 'Condomínio Teste', productPlan: 'complete' },
       email: 'ana@example.com', role, block: 'A', apartment: '101', phone: '', isActive: true,
     });
     if (method === 'GET') {

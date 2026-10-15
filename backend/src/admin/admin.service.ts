@@ -4,7 +4,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { condominiumContext, systemScope } from '../common/condominium-context';
 import { CondominiumsService } from '../condominiums/condominiums.service';
 import { hashRegistrationCode, newRegistrationCode } from '../condominiums/registration-code';
-import { ProvisionCondominiumDto } from './admin.dto';
+import { ProvisionCondominiumDto, UpdateProductPlanDto } from './admin.dto';
 
 @Injectable()
 export class AdminService {
@@ -20,6 +20,7 @@ export class AdminService {
         select: {
           id: true,
           name: true,
+          productPlan: true,
           registrationCode: true,
           codeUpdatedAt: true,
         },
@@ -34,11 +35,12 @@ export class AdminService {
         this.prisma.condominium.create({
           data: {
             name: dto.name,
+            productPlan: dto.productPlan,
             registrationCode: code,
             registrationCodeHash: hashRegistrationCode(code),
             codeUpdatedAt: new Date(),
           },
-          select: { id: true, name: true },
+          select: { id: true, name: true, productPlan: true },
         }),
       );
       return { ...condominium, code };
@@ -52,6 +54,23 @@ export class AdminService {
 
   replaceCode(id: bigint) {
     return condominiumContext.run({ condominiumId: id }, () => this.condominiums.replaceCode());
+  }
+
+  async updateProductPlan(id: bigint, dto: UpdateProductPlanDto) {
+    try {
+      return await systemScope(() =>
+        this.prisma.condominium.update({
+          where: { id },
+          data: { productPlan: dto.productPlan },
+          select: { id: true, name: true, productPlan: true },
+        }),
+      );
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
+        throw new NotFoundException('Condomínio não encontrado.');
+      }
+      throw error;
+    }
   }
 
   revokeCode(id: bigint) {

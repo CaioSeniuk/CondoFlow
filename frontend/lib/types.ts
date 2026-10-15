@@ -11,6 +11,12 @@ export const UserRole = {
 
 export type UserRole = (typeof UserRole)[keyof typeof UserRole];
 
+export type ProductPlan = 'essential' | 'complete';
+export const productPlanLabels: Record<ProductPlan, string> = {
+  essential: 'Essencial',
+  complete: 'Completo',
+};
+
 export interface RoleOption {
   value: UserRole;
   label: string;
@@ -34,7 +40,7 @@ export interface TokenPairResponse {
 export interface AuthenticatedUser {
   isSuperuser?: boolean;
   condominiumId: string;
-  condominium?: { id: string; name: string };
+  condominium?: { id: string; name: string; productPlan: ProductPlan };
   id: string;
   username: string;
   firstName: string;
@@ -50,12 +56,14 @@ export interface AuthenticatedUser {
 export interface AdminCondominium {
   id: string;
   name: string;
+  productPlan: ProductPlan;
   registrationCode: string | null;
   codeUpdatedAt: string | null;
 }
 
 export interface ProvisionCondominiumInput {
   name: string;
+  productPlan: ProductPlan;
 }
 
 export interface PaginatedResult<T> {
@@ -88,6 +96,7 @@ export interface PublicRegisterUserInput extends Omit<RegisterUserInput, 'role'>
 export interface CondominiumInfo {
   id: string;
   name: string;
+  productPlan: ProductPlan;
   codeEnabled: boolean;
   codeUpdatedAt: string | null;
 }

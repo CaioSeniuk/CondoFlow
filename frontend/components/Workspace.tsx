@@ -3,14 +3,14 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { dashboardPathForRole } from '@/lib/auth';
-import { ROLE_OPTIONS, type AuthenticatedUser } from '@/lib/types';
+import { productPlanLabels, ROLE_OPTIONS, type AuthenticatedUser } from '@/lib/types';
 import { useSession } from './SessionProvider';
 import styles from './Workspace.module.css';
 import { visibleModules } from '@/lib/modules';
 import { ModuleIcon } from './ModuleIcon';
 
 function navigationLinks(user: AuthenticatedUser) {
-  const modules = user.isSuperuser ? [] : visibleModules(user.role);
+  const modules = user.isSuperuser ? [] : visibleModules(user.role, user.condominium?.productPlan);
   return [
     { href: dashboardPathForRole(user.role, user.isSuperuser), label: user.isSuperuser ? 'Condomínios' : 'Início' },
     ...(user.role === 'manager' && !user.isSuperuser ? [{ href: '/dashboard/users', label: 'Usuários' }] : []),
@@ -39,7 +39,10 @@ function quickLinks(user: AuthenticatedUser) {
 function bottomNavigationLinks(user: AuthenticatedUser) {
   return [
     { href: dashboardPathForRole(user.role, user.isSuperuser), label: 'Início', icon: 'home' },
-    ...quickLinks(user),
+    ...quickLinks(user).filter((link) => {
+      const key = link.href.split('/')[2];
+      return key === 'users' || visibleModules(user.role, user.condominium?.productPlan).some((item) => item.key === key);
+    }),
     { href: '/dashboard/profile', label: 'Perfil', icon: 'profile' },
   ];
 }
@@ -51,7 +54,7 @@ function Greeting({ user }: Readonly<{ user: AuthenticatedUser }>) {
     <span className={styles.avatar}>{name.slice(0, 1).toUpperCase()}</span>
     <div><strong>Olá, {name}</strong>
       <small>{roleLabel}{user.block && ` · Bloco ${user.block}`}{user.apartment && `, apto ${user.apartment}`}</small>
-      {user.condominium && <small>{user.condominium.name}</small>}
+      {user.condominium && <small>{user.condominium.name} · Produto {productPlanLabels[user.condominium.productPlan]}</small>}
     </div>
   </div>;
 }

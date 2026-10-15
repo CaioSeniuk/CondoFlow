@@ -1,5 +1,5 @@
 import type {
-  AdminCondominium, AuthenticatedUser, CondominiumInfo, PaginatedResult, ProvisionCondominiumInput, PublicRegisterUserInput, RegisterUserInput, TokenPairResponse, UserInput,
+  AdminCondominium, AuthenticatedUser, CondominiumInfo, PaginatedResult, ProductPlan, ProvisionCondominiumInput, PublicRegisterUserInput, RegisterUserInput, TokenPairResponse, UserInput,
 } from './types';
 import { clearTokens, getAccessToken, getRefreshToken, saveTokens } from './auth';
 
@@ -172,6 +172,10 @@ export const condominiumApi = {
 };
 
 export const adminApi = {
+  updateProductPlan: (id: string, productPlan: ProductPlan) =>
+    authenticatedRequest<{ id: string; name: string; productPlan: ProductPlan }>(`/admin/condominiums/${encodeURIComponent(id)}/product-plan`, {
+      method: 'PATCH', body: JSON.stringify({ productPlan }),
+    }),
   remove: (id: string) => authenticatedRequest<{ message: string }>(`/admin/condominiums/${encodeURIComponent(id)}`, { method: 'DELETE' }),
   list: (page: number) => authenticatedRequest<PaginatedResult<AdminCondominium>>(`/admin/condominiums?page=${page}`),
   provision: (input: ProvisionCondominiumInput) => authenticatedRequest<{ id: string; name: string; code: string }>('/admin/condominiums', {

@@ -16,6 +16,7 @@ describe('Shared condominium code lifecycle', () => {
     find.mockResolvedValue({
       id: 9n,
       name: 'Condomínio Teste',
+      productPlan: 'complete',
       registrationCodeHash: null,
       codeUpdatedAt: null,
     });
@@ -44,12 +45,14 @@ describe('Shared condominium code lifecycle', () => {
       id: 9n,
       name: 'Condomínio Teste',
       registrationCodeHash: 'hash',
+      productPlan: 'essential',
       codeUpdatedAt: null,
     });
     expect(await scoped(() => service.me())).toEqual({
       id: 9n,
       name: 'Condomínio Teste',
       codeEnabled: true,
+      productPlan: 'essential',
       codeUpdatedAt: null,
     });
   });

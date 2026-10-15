@@ -17,7 +17,7 @@ export class UsersRepository {
   findById(id: bigint) {
     return this.prisma.user.findUnique({
       where: { id },
-      include: { condominium: { select: { id: true, name: true } } },
+      include: { condominium: { select: { id: true, name: true, productPlan: true } } },
     });
   }
 

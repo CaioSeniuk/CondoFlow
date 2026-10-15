@@ -4,6 +4,7 @@ import type { AuthenticatedUser, UserRole } from '../../lib/types';
 function account(role: UserRole, id = '1'): AuthenticatedUser {
   return {
     id, condominiumId: '1', username: role, firstName: 'Lucas', lastName: 'Almeida',
+    condominium: { id: '1', name: 'Condomínio Teste', productPlan: 'complete' },
     email: `${role}@example.com`, role, block: 'A', apartment: '302',
     phone: '(41) 99999-0000', isActive: true,
   };
@@ -390,7 +391,7 @@ test('global admin creates only a condominium with a persistent code', async ({ 
     if (request.method() === 'OPTIONS') return route.fulfill({ headers, json: {} });
     if (request.method() === 'GET') return route.fulfill({ headers, json: {
       count: created ? 1 : 0, next: null, previous: null,
-      results: created ? [{ id: '2', name: 'Condomínio Novo', registrationCode: currentCode, codeUpdatedAt: new Date().toISOString() }] : [],
+      results: created ? [{ id: '2', name: 'Condomínio Novo', productPlan: 'complete', registrationCode: currentCode, codeUpdatedAt: new Date().toISOString() }] : [],
     } });
     if (request.url().includes('registration-code')) {
       currentCode = 'B'.repeat(32);
@@ -404,7 +405,7 @@ test('global admin creates only a condominium with a persistent code', async ({ 
       created = false;
       return route.fulfill({ headers, json: { message: 'Condomínio excluído.' } });
     }
-    expect(request.postDataJSON()).toEqual({ name: 'Condomínio Novo' });
+    expect(request.postDataJSON()).toEqual({ name: 'Condomínio Novo', productPlan: 'complete' });
     if (created) return route.fulfill({ status: 409, headers, json: { message: 'Já existe um condomínio com este nome.' } });
     created = true;
     return route.fulfill({ status: 201, headers, json: { id: '2', name: 'Condomínio Novo', code: 'A'.repeat(32) } });

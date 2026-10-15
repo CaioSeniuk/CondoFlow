@@ -1,4 +1,4 @@
-import type { UserRole } from './types';
+import type { ProductPlan, UserRole } from './types';
 
 export type ModuleKey = 'announcements' | 'packages' | 'visitors' | 'access-logs' |
   'tickets' | 'providers' | 'evidences' | 'common-areas' | 'reservations' |
@@ -193,8 +193,12 @@ export function moduleFor(key: string): ModuleDefinition | undefined {
   return modules.find((item) => item.key === key);
 }
 
-export function visibleModules(role: UserRole): ModuleDefinition[] {
-  return modules.filter((item) => item.roles.includes(role));
+export function moduleEnabled(key: ModuleKey, plan: ProductPlan): boolean {
+  return plan === 'complete' || !['reservations', 'common-areas', 'polls', 'finance', 'categories'].includes(key);
+}
+
+export function visibleModules(role: UserRole, plan: ProductPlan = 'complete'): ModuleDefinition[] {
+  return modules.filter((item) => item.roles.includes(role) && moduleEnabled(item.key, plan));
 }
 
 function objectLabel(value: object): string {

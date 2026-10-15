@@ -5,13 +5,14 @@ import {
   Get,
   Param,
   ParseIntPipe,
+  Patch,
   Post,
   UseGuards,
 } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AdminGuard } from './admin.guard';
 import { AdminService } from './admin.service';
-import { ProvisionCondominiumDto } from './admin.dto';
+import { ProvisionCondominiumDto, UpdateProductPlanDto } from './admin.dto';
 
 @ApiTags('admin')
 @UseGuards(AdminGuard)
@@ -30,6 +31,15 @@ export class AdminController {
   @ApiBody({ type: ProvisionCondominiumDto })
   provision(@Body() dto: ProvisionCondominiumDto) {
     return this.service.provision(dto);
+  }
+
+  @Patch(':id/product-plan')
+  @ApiOperation({
+    summary: 'Select the LPS product. Global admin only; existing data is preserved.',
+  })
+  @ApiBody({ type: UpdateProductPlanDto })
+  updateProductPlan(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateProductPlanDto) {
+    return this.service.updateProductPlan(BigInt(id), dto);
   }
 
   @Post(':id/registration-code')
