@@ -18,6 +18,8 @@ planilhas manuais por uma experiência digital única.
   - [Template Method](#2-template-method)
   - [Singleton](#3-singleton)
 - [Variabilidade LPS](#variabilidade-lps)
+  - [Selecionar e demonstrar o produto](#selecionar-e-demonstrar-o-produto)
+  - [Verificar a variabilidade](#verificar-a-variabilidade)
 - [Como rodar](#como-rodar)
   - [Backend (Docker)](#backend-docker--recomendado)
   - [Backend (local)](#backend-local-requer-node-26)
@@ -49,12 +51,14 @@ ou localização exata do problema.
 - Controle de acesso por perfil (morador, síndico, porteiro, prestador)
 - Cadastro por código compartilhado do condomínio, gerenciado pelo síndico
 - Isolamento dos recursos da API por condomínio
+- Produtos Essencial e Completo, selecionados por condomínio, com variabilidade LPS na interface e na API
 
 ## Contexto do projeto
 
 Projeto acadêmico desenvolvido na disciplina de Medição e Análise de Processos e Produtos de
 Software (Engenharia de Software — PUCPR), com abordagem de Design Thinking (personas, mapa de
-empatia, storyboard e protótipo de interface) e aplicação de padrões de projeto GoF.
+empatia, storyboard e protótipo de interface), aplicação de padrões de projeto GoF e
+um exemplo codificado de Linha de Produtos de Software (LPS).
 
 ## Stack e especificações
 
@@ -74,6 +78,8 @@ Convenções globais (registradas em `backend/src/app.module.ts`):
 
 - `JwtAuthGuard` como `APP_GUARD`: **toda rota exige token**, exceto as marcadas com `@Public()`
   (login, refresh e cadastro de usuário).
+- `ProductFeatureGuard` como `APP_GUARD`, após a autenticação: bloqueia os módulos opcionais
+  não incluídos no produto do condomínio, independentemente do perfil do usuário.
 - `ZodValidationPipe` como `APP_PIPE`: todo `@Body()` é validado pelo DTO Zod correspondente.
 - `PaginationInterceptor` como `APP_INTERCEPTOR`: listagens retornam
   `{count, next, previous, results}` (20 itens por página, parâmetro `?page=`).
@@ -118,13 +124,15 @@ backend/
 Modelos do banco (`prisma/schema.prisma`): `User`, `Announcement`, `ReadConfirmation`, `Package`,
 `Visitor`, `AccessLog`, `Ticket`, `StatusHistory`, `Provider`, `Evidence`, `CommonArea`,
 `Reservation`, `Poll`, `PollOption`, `Vote`, `ExpenseCategory`, `Expense`.
-Enums: `UserRole`, `AnnouncementSegment`, `PackageStatus`, `AccessDirection`, `TicketUrgency`,
+Enums: `ProductPlan`, `UserRole`, `AnnouncementSegment`, `PackageStatus`, `AccessDirection`, `TicketUrgency`,
 `TicketStatus`, `ReservationStatus`.
 
 `Condominium` identifica o condomínio de cada usuário e recurso principal. Logs, evidências,
 confirmações de leitura e votos herdam o vínculo dos recursos pais. Cada conta pertence
 a um único condomínio, inclusive contas de prestadores; nomes de usuário continuam únicos
 no sistema porque o login utiliza apenas `username`.
+O atributo `Condominium.productPlan` seleciona `essential` ou `complete`; o padrão
+`complete` preserva o comportamento dos condomínios existentes.
 
 O `CondominiumInterceptor` estabelece o contexto assíncrono pelo usuário autenticado, e o
 middleware Prisma aplica o escopo a consultas, alterações, exclusões, relatórios e referências.
@@ -148,6 +156,9 @@ as permissões do banco e do Storage antes de disponibilizar a aplicação em pr
 
 Guards: `RolesGuard` + `@Roles(...)` restringe por perfil; `ManagerOrReadOnlyGuard` libera leitura
 para todos os autenticados e escrita só para `manager`.
+As permissões da tabela são condicionadas ao produto: reservas, enquetes e financeiro
+exigem o Completo. O administrador global seleciona o produto, mas não ignora esse bloqueio
+ao acessar recursos do próprio condomínio.
 
 ## Endpoints da API
 
@@ -158,7 +169,7 @@ Todos sob `/api/v1`. Detalhes de corpo, parâmetros e exemplos no Swagger.
 | Auth | `POST /token` · `POST /token/refresh` (públicas) |
 | Users | `GET /users` · `GET /users/me` · `GET /users/:id` · `POST /users` (pública, exige código e não cria síndicos) · `POST /users/managed` (síndico) · `PATCH/DELETE /users/:id` |
 | Condominiums | `GET /condominiums/me` · `POST /condominiums/me/registration-code` (gerar/substituir, síndico) · `DELETE /condominiums/me/registration-code` (revogar, síndico) |
-| Admin | `GET/POST /admin/condominiums` · `DELETE /admin/condominiums/:id` (apenas sem registros vinculados) · `POST/DELETE /admin/condominiums/:id/registration-code` (administrador global) |
+| Admin | `GET/POST /admin/condominiums` · `PATCH /admin/condominiums/:id/product-plan` · `DELETE /admin/condominiums/:id` (apenas sem registros vinculados) · `POST/DELETE /admin/condominiums/:id/registration-code` (administrador global) |
 | Announcements | `GET/POST /announcements` · `GET/PATCH/DELETE /announcements/:id` · `POST /announcements/:id/confirm_read` · **`POST /announcements/publish/:type`** (Template Method) |
 | Packages | `GET/POST /packages` · `GET/PATCH/DELETE /packages/:id` · `POST /packages/:id/pickup` |
 | Visitors | `GET/POST /visitors` · `GET/PATCH/DELETE /visitors/:id` · `POST /visitors/validate_token` · `GET /visitors/access-logs` |
@@ -167,6 +178,11 @@ Todos sob `/api/v1`. Detalhes de corpo, parâmetros e exemplos no Swagger.
 | Reservations | `GET/POST /reservations/common-areas` · `GET/PATCH/DELETE /reservations/common-areas/:id` · `GET/POST /reservations` · `GET/PATCH/DELETE /reservations/:id` |
 | Polls | `GET/POST /polls` · `GET/PATCH/DELETE /polls/:id` · `POST /polls/:id/vote` |
 | Finance | `GET/POST /finance/categories` · `PATCH/DELETE /finance/categories/:id` · `GET/POST /finance` · `GET/PATCH/DELETE /finance/:id` · **`POST /finance/reports/:type`** (Template Method) |
+
+Todas as rotas de `reservations`, `polls` e `finance`, incluindo áreas comuns,
+categorias, votos e relatórios, exigem o produto Completo. No Essencial, retornam
+`403 Forbidden` com a mensagem `Funcionalidade indisponível no produto deste condomínio.`
+para requisições autenticadas; requisições sem autenticação continuam retornando `401`.
 
 ## Design patterns
 
@@ -348,6 +364,33 @@ relatórios, após a autenticação. `frontend/lib/modules.ts` deriva a interfac
 `frontend/lib/auth.ts` valida as URLs. Testes cobrem os dois produtos, mudanças de seleção,
 isolamento da configuração por condomínio e preservação das permissões por perfil.
 
+### Verificar a variabilidade
+
+Execute a partir da raiz do repositório:
+
+```bash
+# Contratos, bloqueio dos módulos e persistência da seleção com banco simulado
+cd backend
+npm run prisma:generate
+npm test -- --runInBand product-feature.guard admin.product-plan app.spec
+
+# Navegação, URLs diretas, troca em sessão ativa e seleção pelo administrador
+cd ../frontend
+npm test
+npm run build
+npm run test:ui -- tests/ui/lps.spec.ts
+```
+
+Os testes LPS do backend usam mocks de persistência; os testes de interface simulam
+a API. Eles não aplicam a migração nem comprovam sua execução no Supabase. Para a
+demonstração com persistência real, aplique o SQL no banco de demonstração, altere
+o produto no painel, recarregue a página e confira o produto salvo. Use um mesmo
+token para confirmar o bloqueio/liberação da API após cada mudança.
+
+**Limites do exemplo:** a seleção é por condomínio, não por usuário; os módulos opcionais
+formam um pacote, não um configurador de features independentes. O bloqueio é feito pela
+aplicação e não substitui permissões de acesso direto ao PostgreSQL/Supabase.
+
 ## Como rodar
 
 Pré-requisitos: projeto Supabase (Postgres + Storage) com as credenciais em mãos. Para rodar
@@ -390,6 +433,19 @@ descartável vazio de testes, `prisma db push` pode criar diretamente o schema c
 A migração SQL deve ser revisada contra o schema real do Supabase antes de execução,
 inclusive o nome da antiga restrição única de categorias de despesa.
 
+Para um banco legado que ainda não recebeu essas alterações, a ordem de aplicação é:
+
+| Ordem | Script | Alteração |
+|---|---|---|
+| 1 | `backend/prisma/condominiums.sql` | Cria condomínios e vincula os recursos existentes |
+| 2 | `backend/prisma/condominium-code-display.sql` | Armazena o código recuperável e restringe nomes normalizados |
+| 3 | `backend/prisma/lps-product-plan.sql` | Adiciona a seleção do produto, com padrão Completo |
+
+Aplique somente os scripts ainda não executados; eles não devem ser repetidos
+indiscriminadamente. Revise os dados e faça backup antes de cada aplicação. Após a
+atualização, gere novamente o cliente Prisma e reinicie o backend. O comando
+`prisma:generate` e o build Docker **não aplicam esses scripts ao banco**.
+
 Para provisionar o primeiro síndico e usuários de exemplo:
 
 ```bash
@@ -414,9 +470,10 @@ e execute `npm run admin:provision` em `backend`. O usuário padrão é `admin`;
 `ADMIN_USERNAME`, `ADMIN_EMAIL` e `ADMIN_CONDOMINIUM_ID` se necessário. O comando não
 promove nem substitui usuários existentes e não imprime a senha.
 
-Depois do login, o admin acessa `/dashboard/admin`: cadastra um condomínio informando apenas
-o nome e gera seu código, sem criar contas de síndico. Também gera/substitui ou revoga
-o código de condomínios existentes. Nomes repetidos são bloqueados no banco, ignorando
+Depois do login, o admin acessa `/dashboard/admin`: cadastra um condomínio informando
+o nome e selecionando o produto LPS (Essencial ou Completo), e gera seu código sem criar
+contas de síndico. Também altera o produto com confirmação, preservando os dados,
+e gera/substitui ou revoga o código de condomínios existentes. Nomes repetidos são bloqueados no banco, ignorando
 maiúsculas/minúsculas e espaços extras. Aplique também `backend/prisma/condominium-code-display.sql`
 em bancos existentes, depois de resolver nomes duplicados; o script não renomeia nem exclui registros.
 O código fica persistido no banco junto ao hash de validação, é reutilizável
@@ -488,7 +545,8 @@ atalhos por perfil e ocorrências recentes. O visual mobile-first segue o protó
 cards brancos com sombra leve, ícones azuis, filtros em chips e navegação inferior em celulares;
 em telas maiores, o conteúdo mantém uma largura confortável e usa colunas responsivas.
 
-Telas integradas disponíveis em `/dashboard`:
+Telas integradas em `/dashboard` (reservas/áreas comuns, enquetes e financeiro/categorias
+só ficam disponíveis no Completo; todas continuam sujeitas ao perfil):
 
 | Tela | Rota | Funcionalidades |
 |---|---|---|
@@ -521,6 +579,12 @@ não representam notificações push ou um sistema de entrega persistente no ser
 Não são exibidos contadores, taxas de reserva ou ações fictícias do protótipo: por exemplo,
 somente moradores abrem chamados/autorizam visitantes, e prestadores atuam nos serviços atribuídos,
 conforme os guards existentes. Fotos e documentos dependem da configuração do Supabase Storage.
+O perfil e o produto do condomínio também são atualizados a cada 15 segundos quando
+a aba está visível, e ao recuperar foco. Uma alteração de produto atualiza menus, atalhos,
+resumos e atividades; se a tela atual deixar de ser permitida, a sessão redireciona ao
+dashboard do perfil. A API aplica a seleção persistida já na próxima requisição, sem
+exigir novo login ou novo token. Falhas ao carregar a configuração são exibidas com
+opção de tentar novamente, sem assumir silenciosamente um produto.
 
 ```bash
 cd frontend
@@ -559,6 +623,9 @@ condomínios só rodam com `TEST_DATABASE_URL` apontando para um Postgres descar
 schema atualizado; sem ela são ignorados. As suítes alteram e removem dados:
 **nunca use a URL do Supabase real**. Os testes unitários de cadastro, ciclo dos códigos
 e middleware de escopo não dependem de banco.
+As suítes `common/product-feature.guard.spec.ts`, `admin/admin.product-plan.spec.ts`
+e `app.spec.ts` verificam a variabilidade LPS sem banco real. A suíte de interface
+`frontend/tests/ui/lps.spec.ts` verifica os dois produtos na experiência do usuário.
 
 ## Variáveis de ambiente
 
